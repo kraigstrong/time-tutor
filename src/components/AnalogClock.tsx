@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, type SetStateAction } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -41,6 +42,20 @@ export function AnalogClock({
   onMeridiemChange,
 }: AnalogClockProps) {
   const activeHandRef = useRef<HandName | null>(null);
+  const webClockInteractionStyle =
+    Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+          touchAction: 'none',
+          userSelect: 'none',
+        } as const)
+      : undefined;
+  const webSvgStyle =
+    Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+        } as any)
+      : undefined;
   const radius = size / 2;
   const hourLength = size * 0.2;
   const minuteLength = size * 0.29;
@@ -115,10 +130,19 @@ export function AnalogClock({
         onResponderRelease={handleEnd}
         onResponderTerminate={handleEnd}
         onStartShouldSetResponder={() => interactive}
-        style={[styles.clockShell, { height: size, width: size }]}
+        style={[
+          styles.clockShell,
+          interactive && webClockInteractionStyle,
+          { height: size, width: size },
+        ]}
         testID="analog-clock-surface"
       >
-        <Svg height={size} width={size}>
+        <Svg
+          height={size}
+          pointerEvents="none"
+          style={webSvgStyle}
+          width={size}
+        >
           <Circle
             cx={radius}
             cy={radius}
@@ -249,6 +273,7 @@ function pickHand(
   minuteTip: { x: number; y: number },
   radius: number,
 ): HandName {
+  const isWeb = Platform.OS === 'web';
   const { locationX, locationY } = event.nativeEvent;
   const distanceToHour = getDistance(locationX, locationY, hourTip.x, hourTip.y);
   const distanceToMinute = getDistance(
@@ -258,13 +283,13 @@ function pickHand(
     minuteTip.y,
   );
   const centerDistance = getDistance(locationX, locationY, radius, radius);
-  const touchThreshold = Math.max(size * 0.11, 28);
+  const touchThreshold = Math.max(size * (isWeb ? 0.16 : 0.11), isWeb ? 42 : 28);
 
   if (distanceToHour <= touchThreshold || distanceToMinute <= touchThreshold) {
     return distanceToHour < distanceToMinute ? 'hour' : 'minute';
   }
 
-  return centerDistance < radius * 0.58 ? 'hour' : 'minute';
+  return centerDistance < radius * (isWeb ? 0.64 : 0.58) ? 'hour' : 'minute';
 }
 
 function getDistance(
