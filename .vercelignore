@@ -1,0 +1,12 @@
+.git
+.bundle
+.vercel
+node_modules
+vendor
+dist
+coverage
+__tests__
+android
+ios
+Gemfile
+Gemfile.lock
