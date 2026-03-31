@@ -3,11 +3,15 @@ import { Platform } from 'react-native';
 
 import { HomeScreen } from '../screens/HomeScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
-import type { ExerciseMode } from '../types/time';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import type { ExerciseMode, PracticeInterval } from '../types/time';
 
 type ActiveRoute =
   | {
       name: 'Home';
+    }
+  | {
+      name: 'Settings';
     }
   | {
       mode: ExerciseMode;
@@ -16,6 +20,8 @@ type ActiveRoute =
 
 export function AppNavigator() {
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
+  const [practiceInterval, setPracticeInterval] =
+    useState<PracticeInterval>('5-minute');
   const [route, setRoute] = useState<ActiveRoute>(() =>
     isWeb ? getRouteFromBrowser() : { name: 'Home' },
   );
@@ -68,6 +74,10 @@ export function AppNavigator() {
     () => (isWeb ? 'replace' : 'push'),
     [isWeb],
   );
+  const settingsBackMode = useMemo<'push' | 'replace'>(
+    () => (isWeb ? 'replace' : 'push'),
+    [isWeb],
+  );
 
   if (route.name === 'Practice') {
     return (
@@ -78,8 +88,19 @@ export function AppNavigator() {
     );
   }
 
+  if (route.name === 'Settings') {
+    return (
+      <SettingsScreen
+        interval={practiceInterval}
+        onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
+        onSelectInterval={setPracticeInterval}
+      />
+    );
+  }
+
   return (
     <HomeScreen
+      onOpenSettings={() => navigate({ name: 'Settings' })}
       onSelectMode={mode => navigate({ mode, name: 'Practice' })}
     />
   );
@@ -87,7 +108,14 @@ export function AppNavigator() {
 
 function getRouteFromBrowser(): ActiveRoute {
   const params = new URLSearchParams(window.location.search);
+  const page = params.get('page');
   const mode = params.get('mode');
+
+  if (page === 'settings') {
+    return {
+      name: 'Settings',
+    };
+  }
 
   if (mode === 'digital-to-analog' || mode === 'analog-to-digital') {
     return {
@@ -110,6 +138,10 @@ function getUrlForRoute(route: ActiveRoute): string {
     url.searchParams.set('mode', route.mode);
   }
 
+  if (route.name === 'Settings') {
+    url.searchParams.set('page', 'settings');
+  }
+
   return `${url.pathname}${url.search}`;
 }
 
@@ -119,7 +151,11 @@ function serializeRoute(route: ActiveRoute) {
         mode: route.mode,
         name: route.name,
       }
-    : {
+    : route.name === 'Settings'
+      ? {
+          name: route.name,
+        }
+      : {
         name: route.name,
       };
 }

@@ -13,6 +13,7 @@ import { fontFamily, palette, shadows } from '../styles/theme';
 import type { ExerciseMode } from '../types/time';
 
 type Props = {
+  onOpenSettings: () => void;
   onSelectMode: (mode: ExerciseMode) => void;
 };
 
@@ -36,7 +37,7 @@ const modeCards: Array<{
   },
 ];
 
-export function HomeScreen({ onSelectMode }: Props) {
+export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isTablet = width >= 768;
@@ -58,7 +59,19 @@ export function HomeScreen({ onSelectMode }: Props) {
       <View style={styles.backgroundBubbleSmall} />
       <View style={[styles.content, { maxWidth: contentWidth }]}>
         <View style={styles.headerSection}>
-          <Text style={styles.title}>Time Tutor</Text>
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerSpacer} />
+            <Text style={styles.title}>Time Tutor</Text>
+            <Pressable
+              accessibilityLabel="Open settings"
+              accessibilityRole="button"
+              onPress={onOpenSettings}
+              style={styles.settingsButton}
+              testID="open-settings-button"
+            >
+              <Text style={styles.settingsButtonText}>⚙</Text>
+            </Pressable>
+          </View>
           <Text style={styles.modePrompt}>Choose a mode</Text>
         </View>
 
@@ -124,17 +137,41 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerSection: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: 8,
     paddingBottom: 6,
   },
+  headerTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  headerSpacer: {
+    width: 44,
+  },
   title: {
     color: palette.ink,
+    flex: 1,
     fontFamily: fontFamily.display,
     fontSize: 38,
     fontWeight: '700',
     letterSpacing: 0.4,
     textAlign: 'center',
+  },
+  settingsButton: {
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+    borderRadius: 999,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+    ...shadows.card,
+  },
+  settingsButtonText: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 24,
   },
   modePrompt: {
     color: palette.ink,

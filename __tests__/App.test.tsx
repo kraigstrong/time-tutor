@@ -7,6 +7,7 @@ import { HomeScreen } from '../src/screens/HomeScreen';
 describe('HomeScreen', () => {
   it('shows both learning modes and emits the selected mode', () => {
     const onSelectMode = jest.fn();
+    const onOpenSettings = jest.fn();
     const { getByText, getByTestId } = render(
       <SafeAreaProvider
         initialMetrics={{
@@ -14,10 +15,14 @@ describe('HomeScreen', () => {
           insets: { bottom: 34, left: 0, right: 0, top: 59 },
         }}
       >
-        <HomeScreen onSelectMode={onSelectMode} />
+        <HomeScreen
+          onOpenSettings={onOpenSettings}
+          onSelectMode={onSelectMode}
+        />
       </SafeAreaProvider>,
     );
 
+    expect(getByTestId('open-settings-button')).toBeTruthy();
     expect(getByText('Choose a mode')).toBeTruthy();
     expect(getByText('Set the Clock')).toBeTruthy();
     expect(getByText('Read the Clock')).toBeTruthy();
@@ -25,5 +30,9 @@ describe('HomeScreen', () => {
     fireEvent.press(getByTestId('digital-to-analog-card'));
 
     expect(onSelectMode).toHaveBeenCalledWith('digital-to-analog');
+
+    fireEvent.press(getByTestId('open-settings-button'));
+
+    expect(onOpenSettings).toHaveBeenCalled();
   });
 });
