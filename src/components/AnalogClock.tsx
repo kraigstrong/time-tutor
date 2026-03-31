@@ -275,6 +275,7 @@ function pickHand(
 ): HandName {
   const isWeb = Platform.OS === 'web';
   const { locationX, locationY } = event.nativeEvent;
+  const shaftThreshold = Math.max(size * (isWeb ? 0.045 : 0.035), isWeb ? 18 : 12);
   const distanceToHour = getDistance(locationX, locationY, hourTip.x, hourTip.y);
   const distanceToMinute = getDistance(
     locationX,
@@ -282,10 +283,49 @@ function pickHand(
     minuteTip.x,
     minuteTip.y,
   );
+  const hourShaftDistance = getDistanceToSegment(
+    locationX,
+    locationY,
+    radius,
+    radius,
+    hourTip.x,
+    hourTip.y,
+  );
+  const minuteShaftDistance = getDistanceToSegment(
+    locationX,
+    locationY,
+    radius,
+    radius,
+    minuteTip.x,
+    minuteTip.y,
+  );
   const centerDistance = getDistance(locationX, locationY, radius, radius);
   const touchThreshold = Math.max(size * (isWeb ? 0.16 : 0.11), isWeb ? 42 : 28);
+  const isNearHourShaft = hourShaftDistance <= shaftThreshold;
+  const isNearMinuteShaft = minuteShaftDistance <= shaftThreshold;
+
+  if (isNearHourShaft || isNearMinuteShaft) {
+    if (isNearHourShaft && isNearMinuteShaft) {
+      const hourReach = getDistance(radius, radius, hourTip.x, hourTip.y);
+      const minuteReach = getDistance(radius, radius, minuteTip.x, minuteTip.y);
+
+      if (Math.abs(hourShaftDistance - minuteShaftDistance) <= 2) {
+        return centerDistance <= hourReach + (minuteReach - hourReach) * 0.35
+          ? 'hour'
+          : 'minute';
+      }
+
+      return hourShaftDistance < minuteShaftDistance ? 'hour' : 'minute';
+    }
+
+    return isNearMinuteShaft ? 'minute' : 'hour';
+  }
 
   if (distanceToHour <= touchThreshold || distanceToMinute <= touchThreshold) {
+    if (Math.abs(distanceToHour - distanceToMinute) <= 2) {
+      return 'minute';
+    }
+
     return distanceToHour < distanceToMinute ? 'hour' : 'minute';
   }
 
@@ -299,6 +339,32 @@ function getDistance(
   y2: number,
 ) {
   return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+}
+
+function getDistanceToSegment(
+  pointX: number,
+  pointY: number,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+) {
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  const segmentLengthSquared = deltaX ** 2 + deltaY ** 2;
+
+  if (segmentLengthSquared === 0) {
+    return getDistance(pointX, pointY, startX, startY);
+  }
+
+  const projection =
+    ((pointX - startX) * deltaX + (pointY - startY) * deltaY) /
+    segmentLengthSquared;
+  const clampedProjection = Math.max(0, Math.min(1, projection));
+  const closestX = startX + clampedProjection * deltaX;
+  const closestY = startY + clampedProjection * deltaY;
+
+  return getDistance(pointX, pointY, closestX, closestY);
 }
 
 const styles = StyleSheet.create({
