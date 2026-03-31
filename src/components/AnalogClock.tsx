@@ -42,6 +42,7 @@ export function AnalogClock({
   onMeridiemChange,
 }: AnalogClockProps) {
   const activeHandRef = useRef<HandName | null>(null);
+  const shellPadding = Platform.OS === 'web' ? 0 : 6;
   const webClockInteractionStyle =
     Platform.OS === 'web'
       ? ({
@@ -133,7 +134,7 @@ export function AnalogClock({
         style={[
           styles.clockShell,
           interactive && webClockInteractionStyle,
-          { height: size, width: size },
+          { height: size, padding: shellPadding, width: size },
         ]}
         testID="analog-clock-surface"
       >
@@ -377,7 +378,6 @@ const styles = StyleSheet.create({
     backgroundColor: palette.backgroundAccent,
     borderRadius: 999,
     justifyContent: 'center',
-    padding: 6,
     ...shadows.card,
   },
   helperText: {

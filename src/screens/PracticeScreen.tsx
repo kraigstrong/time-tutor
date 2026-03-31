@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -273,6 +274,7 @@ const styles = StyleSheet.create({
   promptClockWrap: {
     alignItems: 'center',
     marginTop: 18,
+    paddingBottom: Platform.OS === 'web' ? 14 : 0,
   },
   answerCard: {
     backgroundColor: palette.surface,
