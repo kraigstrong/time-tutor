@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:TimeTutor.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Pods/Pods.xcodeproj">
+   </FileRef>
+   <Group
+      location = "container:../src"
+      name = "src">
+      <Group
+         location = "group:types"
+         name = "types">
+         <FileRef
+            location = "group:time.ts">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:navigation"
+         name = "navigation">
+         <FileRef
+            location = "group:AppNavigator.tsx">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:utils"
+         name = "utils">
+         <FileRef
+            location = "group:time.ts">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:screens"
+         name = "screens">
+         <FileRef
+            location = "group:HomeScreen.tsx">
+         </FileRef>
+         <FileRef
+            location = "group:PracticeScreen.tsx">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:styles"
+         name = "styles">
+         <FileRef
+            location = "group:theme.ts">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:components"
+         name = "components">
+         <FileRef
+            location = "container:../App.tsx">
+         </FileRef>
+         <FileRef
+            location = "group:DigitalTimeInput.tsx">
+         </FileRef>
+         <FileRef
+            location = "group:AnalogClock.tsx">
+         </FileRef>
+         <FileRef
+            location = "group:ResultBanner.tsx">
+         </FileRef>
+      </Group>
+   </Group>
+   <FileRef
+      location = "container:../index.js">
+   </FileRef>
+   <FileRef
+      location = "container:../package.json">
+   </FileRef>
+</Workspace>
