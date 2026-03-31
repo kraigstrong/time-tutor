@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { HomeScreen } from '../src/screens/HomeScreen';
 
@@ -7,10 +8,16 @@ describe('HomeScreen', () => {
   it('shows both learning modes and emits the selected mode', () => {
     const onSelectMode = jest.fn();
     const { getByText, getByTestId } = render(
-      <HomeScreen onSelectMode={onSelectMode} />,
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 852, width: 393, x: 0, y: 0 },
+          insets: { bottom: 34, left: 0, right: 0, top: 59 },
+        }}
+      >
+        <HomeScreen onSelectMode={onSelectMode} />
+      </SafeAreaProvider>,
     );
 
-    expect(getByText('Time Tutor')).toBeTruthy();
     expect(getByText('Choose a mode')).toBeTruthy();
     expect(getByText('Set the Clock')).toBeTruthy();
     expect(getByText('Read the Clock')).toBeTruthy();

@@ -7,8 +7,8 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { TimeTutorLogo } from '../components/TimeTutorLogo';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { ExerciseMode } from '../types/time';
 
@@ -38,21 +38,27 @@ const modeCards: Array<{
 
 export function HomeScreen({ onSelectMode }: Props) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isTablet = width >= 768;
   const contentWidth = Math.min(width - 24, isTablet ? 760 : 560);
-  const logoCompact = width < 380;
 
   return (
     <ScrollView
       bounces={false}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        {
+          paddingBottom: Math.max(insets.bottom + 24, 28),
+          paddingTop: Math.max(insets.top + 12, 28),
+        },
+      ]}
       style={styles.scrollView}
     >
       <View style={styles.backgroundBubbleLarge} />
       <View style={styles.backgroundBubbleSmall} />
       <View style={[styles.content, { maxWidth: contentWidth }]}>
-        <View style={styles.logoSection}>
-          <TimeTutorLogo compact={logoCompact} />
+        <View style={styles.headerSection}>
+          <Text style={styles.title}>Time Tutor</Text>
           <Text style={styles.modePrompt}>Choose a mode</Text>
         </View>
 
@@ -90,9 +96,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 24,
   },
   backgroundBubbleLarge: {
     backgroundColor: palette.backgroundAccent,
@@ -119,16 +123,25 @@ const styles = StyleSheet.create({
     gap: 18,
     width: '100%',
   },
-  logoSection: {
+  headerSection: {
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 4,
+    gap: 8,
+    paddingBottom: 6,
+  },
+  title: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 38,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textAlign: 'center',
   },
   modePrompt: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
+    textAlign: 'center',
   },
   cardColumn: {
     gap: 14,

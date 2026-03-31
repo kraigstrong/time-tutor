@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon } from 'react-native-svg';
 
 import { fontFamily, palette } from '../styles/theme';
 
@@ -10,7 +10,24 @@ type TimeTutorLogoProps = {
 
 export function TimeTutorLogo({ compact = false }: TimeTutorLogoProps) {
   const size = compact ? 72 : 92;
-  const radius = size / 2;
+  const frameSize = size + 22;
+  const centerX = frameSize / 2;
+  const centerY = compact ? frameSize / 2 + 4 : frameSize / 2 + 6;
+  const radius = size / 2 - 2;
+  const tickOuterRadius = radius - 9;
+  const tickInnerRadiusMajor = radius - 19;
+  const tickInnerRadiusMinor = radius - 14;
+  const hourHandLength = radius * 0.44;
+  const minuteHandLength = radius * 0.64;
+  const capWidth = compact ? 28 : 34;
+  const capHeight = compact ? 8 : 10;
+  const capTop = centerY - radius - (compact ? 3 : 5);
+  const capPoints = [
+    `${centerX - capWidth} ${capTop}`,
+    `${centerX} ${capTop - capHeight}`,
+    `${centerX + capWidth} ${capTop}`,
+    `${centerX} ${capTop + capHeight}`,
+  ].join(' ');
 
   return (
     <View style={styles.container}>
@@ -18,68 +35,100 @@ export function TimeTutorLogo({ compact = false }: TimeTutorLogoProps) {
         style={[
           styles.markWrap,
           compact && styles.markWrapCompact,
-          { height: size + 22, width: size + 22 },
+          { height: frameSize, width: frameSize },
         ]}
       >
-        <Svg height={size + 22} width={size + 22}>
+        <Svg height={frameSize} width={frameSize}>
           <Circle
-            cx={radius + 11}
-            cy={radius + 11}
+            cx={centerX}
+            cy={centerY}
             fill="#FFF8EE"
             r={radius}
-            stroke={palette.ink}
+            stroke="#FFDCC2"
             strokeWidth={4}
           />
           <Circle
-            cx={radius + 11}
-            cy={radius + 11}
+            cx={centerX}
+            cy={centerY}
             fill="none"
             r={radius - 9}
             stroke={palette.ring}
-            strokeWidth={2}
+            strokeWidth={compact ? 3 : 4}
           />
-          <Rect
+          {Array.from({ length: 12 }).map((_, index) => {
+            const angle = index * 30;
+            const outer = getPoint(angle, tickOuterRadius, centerX, centerY);
+            const inner = getPoint(
+              angle,
+              index % 3 === 0 ? tickInnerRadiusMajor : tickInnerRadiusMinor,
+              centerX,
+              centerY,
+            );
+
+            return (
+              <Line
+                key={`tick-${angle}`}
+                stroke={palette.ink}
+                strokeLinecap="round"
+                strokeWidth={compact ? 3 : 4}
+                x1={inner.x}
+                x2={outer.x}
+                y1={inner.y}
+                y2={outer.y}
+              />
+            );
+          })}
+          <Polygon
             fill={palette.ink}
-            height={26}
-            rx={8}
-            width={40}
-            x={radius - 9}
-            y={radius + 22}
+            points={capPoints}
           />
-          <SvgText
-            fill={palette.white}
-            fontFamily={fontFamily.display}
-            fontSize="12"
-            fontWeight="700"
-            textAnchor="middle"
-            x={radius + 11}
-            y={radius + 39}
-          >
-            3:25
-          </SvgText>
+          <Line
+            stroke={palette.ink}
+            strokeLinecap="round"
+            strokeWidth={compact ? 4 : 5}
+            x1={centerX}
+            x2={centerX}
+            y1={capTop + capHeight - 1}
+            y2={capTop + capHeight + (compact ? 8 : 10)}
+          />
+          <Line
+            stroke={palette.gold}
+            strokeLinecap="round"
+            strokeWidth={compact ? 2 : 2.5}
+            x1={centerX + capWidth * 0.54}
+            x2={centerX + capWidth * 0.78}
+            y1={capTop + 1}
+            y2={capTop + (compact ? 16 : 20)}
+          />
+          <Circle
+            cx={centerX + capWidth * 0.8}
+            cy={capTop + (compact ? 18 : 22)}
+            fill={palette.ink}
+            r={compact ? 2.5 : 3}
+          />
           <Line
             stroke={palette.coral}
             strokeLinecap="round"
-            strokeWidth={4}
-            x1={radius + 11}
-            x2={radius + 11}
-            y1={radius + 11}
-            y2={radius - 12}
+            strokeWidth={compact ? 5 : 6}
+            x1={centerX}
+            x2={centerX}
+            y1={centerY}
+            y2={centerY - minuteHandLength}
           />
           <Line
             stroke={palette.teal}
             strokeLinecap="round"
-            strokeWidth={4}
-            x1={radius + 11}
-            x2={radius + 31}
-            y1={radius + 11}
-            y2={radius + 1}
+            strokeWidth={compact ? 5 : 6}
+            x1={centerX}
+            x2={centerX + hourHandLength * 0.8}
+            y1={centerY}
+            y2={centerY + hourHandLength * 0.28}
           />
           <Circle
-            cx={radius + 11}
-            cy={radius + 11}
-            fill={palette.gold}
-            r={5}
+            cx={centerX}
+            cy={centerY}
+            fill={palette.teal}
+            r={compact ? 6 : 7}
           />
         </Svg>
       </View>
@@ -128,3 +177,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 });
+
+function getPoint(
+  angle: number,
+  distance: number,
+  centerX: number,
+  centerY: number,
+) {
+  const radians = (angle * Math.PI) / 180;
+
+  return {
+    x: centerX + Math.sin(radians) * distance,
+    y: centerY - Math.cos(radians) * distance,
+  };
+}
