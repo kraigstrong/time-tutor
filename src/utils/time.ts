@@ -1,11 +1,14 @@
 import {
+  FIFTEEN_MINUTE_STEPS,
+  HOUR_ONLY_MINUTE_STEPS,
   HOURS_12,
   MERIDIEMS,
   MINUTE_STEPS,
   type ExerciseMode,
   type Hour12,
   type Meridiem,
-  type MinuteStep,
+  type MinuteValue,
+  type PracticeInterval,
   type TimeValue,
 } from '../types/time';
 
@@ -20,10 +23,18 @@ type TimeComparisonOptions = {
 };
 
 export function randomTimeValue(random = Math.random): TimeValue {
+  return randomTimeValueForInterval('5-minute', random);
+}
+
+export function randomTimeValueForInterval(
+  interval: PracticeInterval,
+  random = Math.random,
+): TimeValue {
   const hour12 = HOURS_12[Math.floor(random() * HOURS_12.length)] as Hour12;
-  const minute = MINUTE_STEPS[
-    Math.floor(random() * MINUTE_STEPS.length)
-  ] as MinuteStep;
+  const minuteOptions = getMinuteOptions(interval);
+  const minute = minuteOptions[
+    Math.floor(random() * minuteOptions.length)
+  ] as MinuteValue;
   const meridiem = MERIDIEMS[Math.floor(random() * MERIDIEMS.length)] as Meridiem;
 
   return {
@@ -37,14 +48,22 @@ export function nextTimeValue(
   previous: TimeValue,
   random = Math.random,
 ): TimeValue {
-  let candidate = randomTimeValue(random);
+  return nextTimeValueForInterval(previous, '5-minute', random);
+}
+
+export function nextTimeValueForInterval(
+  previous: TimeValue,
+  interval: PracticeInterval,
+  random = Math.random,
+): TimeValue {
+  let candidate = randomTimeValueForInterval(interval, random);
   let attempts = 0;
 
   while (
     attempts < 24 &&
     areTimesEqual(candidate, previous, { includeMeridiem: false })
   ) {
-    candidate = randomTimeValue(random);
+    candidate = randomTimeValueForInterval(interval, random);
     attempts += 1;
   }
 
@@ -91,10 +110,19 @@ export function getClockHandAngles(time: TimeValue) {
   };
 }
 
-export function snapMinuteFromAngle(angle: number): MinuteStep {
-  const stepIndex = Math.round(normalizeAngle(angle) / 30) % MINUTE_STEPS.length;
+export function snapMinuteFromAngle(angle: number): MinuteValue {
+  return snapMinuteFromAngleForInterval(angle, '5-minute');
+}
 
-  return MINUTE_STEPS[stepIndex] as MinuteStep;
+export function snapMinuteFromAngleForInterval(
+  angle: number,
+  interval: PracticeInterval,
+): MinuteValue {
+  const minuteOptions = getMinuteOptions(interval);
+  const stepSize = FULL_CIRCLE_DEGREES / minuteOptions.length;
+  const stepIndex = Math.round(normalizeAngle(angle) / stepSize) % minuteOptions.length;
+
+  return minuteOptions[stepIndex] as MinuteValue;
 }
 
 export function deriveHourFromAngle(angle: number): Hour12 {
@@ -143,18 +171,27 @@ export function cycleHour(hour: Hour12, delta: number): Hour12 {
   return HOURS_12[nextIndex] as Hour12;
 }
 
-export function cycleMinute(minute: MinuteStep, delta: number): MinuteStep {
-  const index = MINUTE_STEPS.indexOf(minute);
-  const nextIndex = modulo(index + delta, MINUTE_STEPS.length);
+export function cycleMinute(minute: MinuteValue, delta: number): MinuteValue {
+  return cycleMinuteForInterval(minute, delta, '5-minute');
+}
 
-  return MINUTE_STEPS[nextIndex] as MinuteStep;
+export function cycleMinuteForInterval(
+  minute: MinuteValue,
+  delta: number,
+  interval: PracticeInterval,
+): MinuteValue {
+  const minuteOptions = getMinuteOptions(interval);
+  const currentIndex = getClosestMinuteOptionIndex(minute, minuteOptions);
+  const nextIndex = modulo(currentIndex + delta, minuteOptions.length);
+
+  return minuteOptions[nextIndex] as MinuteValue;
 }
 
 export function toggleMeridiem(current: Meridiem): Meridiem {
   return current === 'AM' ? 'PM' : 'AM';
 }
 
-export function applyMinuteDrag(time: TimeValue, nextMinute: MinuteStep): TimeValue {
+export function applyMinuteDrag(time: TimeValue, nextMinute: MinuteValue): TimeValue {
   const wrappedForward = time.minute >= 45 && nextMinute <= 15;
   const wrappedBackward = time.minute <= 15 && nextMinute >= 45;
 
@@ -184,6 +221,20 @@ export function applyMinuteDrag(time: TimeValue, nextMinute: MinuteStep): TimeVa
   };
 }
 
+export function getMinuteOptions(interval: PracticeInterval): readonly number[] {
+  switch (interval) {
+    case '1-minute':
+      return ONE_MINUTE_VALUES;
+    case '15-minute':
+      return FIFTEEN_MINUTE_STEPS;
+    case 'hours-only':
+      return HOUR_ONLY_MINUTE_STEPS;
+    case '5-minute':
+    default:
+      return MINUTE_STEPS;
+  }
+}
+
 function normalizeAngle(angle: number): number {
   return ((angle % FULL_CIRCLE_DEGREES) + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES;
 }
@@ -191,3 +242,23 @@ function normalizeAngle(angle: number): number {
 function modulo(value: number, divisor: number): number {
   return ((value % divisor) + divisor) % divisor;
 }
+
+function getClosestMinuteOptionIndex(
+  minute: MinuteValue,
+  minuteOptions: readonly number[],
+): number {
+  const exactIndex = minuteOptions.indexOf(minute);
+
+  if (exactIndex >= 0) {
+    return exactIndex;
+  }
+
+  return minuteOptions.reduce((closestIndex, option, index) => {
+    const closestDistance = Math.abs(minuteOptions[closestIndex] - minute);
+    const optionDistance = Math.abs(option - minute);
+
+    return optionDistance < closestDistance ? index : closestIndex;
+  }, 0);
+}
+
+const ONE_MINUTE_VALUES = Array.from({ length: 60 }, (_, minute) => minute);

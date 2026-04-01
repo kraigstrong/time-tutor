@@ -15,26 +15,38 @@ import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
 import { ResultBanner } from '../components/ResultBanner';
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { ExerciseMode, SubmissionResult, TimeValue } from '../types/time';
+import type {
+  ExerciseMode,
+  PracticeInterval,
+  SubmissionResult,
+  TimeValue,
+} from '../types/time';
 import {
   areTimesEqual,
   createInitialAnswer,
   formatTimeValue,
   getModeDescription,
   getModeTitle,
-  nextTimeValue,
-  randomTimeValue,
+  nextTimeValueForInterval,
+  randomTimeValueForInterval,
 } from '../utils/time';
 
 type Props = {
   mode: ExerciseMode;
   onBack: () => void;
+  practiceInterval?: PracticeInterval;
 };
 
-export function PracticeScreen({ mode, onBack }: Props) {
+export function PracticeScreen({
+  mode,
+  onBack,
+  practiceInterval = '5-minute',
+}: Props) {
   const showMeridiem = false;
   const insets = useSafeAreaInsets();
-  const [promptTime, setPromptTime] = useState<TimeValue>(() => randomTimeValue());
+  const [promptTime, setPromptTime] = useState<TimeValue>(() =>
+    randomTimeValueForInterval(practiceInterval),
+  );
   const [analogAnswer, setAnalogAnswer] = useState<TimeValue>(() =>
     createInitialAnswer(promptTime.meridiem),
   );
@@ -55,13 +67,13 @@ export function PracticeScreen({ mode, onBack }: Props) {
   const showCelebration = result?.isCorrect ?? false;
 
   const goToNextPrompt = useCallback(() => {
-    const nextPrompt = nextTimeValue(promptTime);
+    const nextPrompt = nextTimeValueForInterval(promptTime, practiceInterval);
 
     setPromptTime(nextPrompt);
     setAnalogAnswer(createInitialAnswer(nextPrompt.meridiem));
     setDigitalAnswer(createInitialAnswer(nextPrompt.meridiem));
     setResult(null);
-  }, [promptTime]);
+  }, [practiceInterval, promptTime]);
 
   useEffect(() => {
     if (!result?.isCorrect) {
@@ -146,12 +158,14 @@ export function PracticeScreen({ mode, onBack }: Props) {
                     meridiem,
                   }))
                 }
+                practiceInterval={practiceInterval}
                 size={clockSize}
                 time={analogAnswer}
               />
             ) : (
               <DigitalTimeInput
                 onChange={setDigitalAnswer}
+                practiceInterval={practiceInterval}
                 showMeridiem={showMeridiem}
                 value={digitalAnswer}
               />

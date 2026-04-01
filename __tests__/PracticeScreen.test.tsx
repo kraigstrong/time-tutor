@@ -14,11 +14,13 @@ jest.mock('../src/utils/time', () => {
 
   return {
     ...actual,
-    randomTimeValue: jest.fn(),
+    randomTimeValueForInterval: jest.fn(),
   };
 });
 
-const mockRandomTimeValue = jest.mocked(timeUtils.randomTimeValue);
+const mockRandomTimeValueForInterval = jest.mocked(
+  timeUtils.randomTimeValueForInterval,
+);
 const safeAreaMetrics: Metrics = {
   frame: { height: 844, width: 390, x: 0, y: 0 },
   insets: { bottom: 34, left: 0, right: 0, top: 59 },
@@ -36,25 +38,20 @@ describe('PracticeScreen', () => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
     jest.restoreAllMocks();
-    mockRandomTimeValue.mockReset();
+    mockRandomTimeValueForInterval.mockReset();
   });
 
   it('celebrates a correct answer and automatically advances to a different prompt', () => {
-    mockRandomTimeValue
+    mockRandomTimeValueForInterval
       .mockReturnValueOnce({
         hour12: 3,
         meridiem: 'PM',
         minute: 25,
       })
-      .mockReturnValueOnce({
+      .mockReturnValue({
         hour12: 7,
         meridiem: 'AM',
         minute: 10,
-      })
-      .mockReturnValueOnce({
-        hour12: 8,
-        meridiem: 'PM',
-        minute: 40,
       });
 
     const onBack = jest.fn();
@@ -84,6 +81,44 @@ describe('PracticeScreen', () => {
 
     expect(screen.queryByText('Correct! Nice work.')).toBeNull();
     expect(screen.queryByText('You matched 3:25 exactly.')).toBeNull();
+  });
+
+  it('disables minute changes when the practice interval is hours only', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 6,
+      meridiem: 'AM',
+      minute: 0,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} practiceInterval="hours-only" />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('hour-increment-button'));
+    fireEvent.press(screen.getByTestId('minute-increment-button'));
+
+    expect(screen.getByText('1')).toBeTruthy();
+    expect(screen.getByText('00')).toBeTruthy();
+  });
+
+  it('uses the selected interval for minute increments', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 4,
+      meridiem: 'AM',
+      minute: 15,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} practiceInterval="15-minute" />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('minute-increment-button'));
+
+    expect(screen.getByText('15')).toBeTruthy();
   });
 
 });

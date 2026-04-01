@@ -84,6 +84,7 @@ export function AppNavigator() {
       <PracticeScreen
         mode={route.mode}
         onBack={() => navigate({ name: 'Home' }, practiceBackMode)}
+        practiceInterval={practiceInterval}
       />
     );
   }

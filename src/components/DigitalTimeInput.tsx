@@ -2,13 +2,14 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { Meridiem, TimeValue } from '../types/time';
-import { cycleHour, cycleMinute } from '../utils/time';
+import type { Meridiem, PracticeInterval, TimeValue } from '../types/time';
+import { cycleHour, cycleMinuteForInterval } from '../utils/time';
 
 type DigitalTimeInputProps = {
   value: TimeValue;
   onChange: (value: TimeValue) => void;
   showMeridiem?: boolean;
+  practiceInterval?: PracticeInterval;
 };
 
 type ControlCardProps = {
@@ -18,13 +19,17 @@ type ControlCardProps = {
   onDecrement: () => void;
   decrementTestID: string;
   incrementTestID: string;
+  disabled?: boolean;
 };
 
 export function DigitalTimeInput({
   value,
   onChange,
   showMeridiem = false,
+  practiceInterval = '5-minute',
 }: DigitalTimeInputProps) {
+  const showMinuteControls = practiceInterval !== 'hours-only';
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Enter the time</Text>
@@ -50,16 +55,17 @@ export function DigitalTimeInput({
         <ControlCard
           label="Minute"
           value={String(value.minute).padStart(2, '0')}
+          disabled={!showMinuteControls}
           onIncrement={() =>
             onChange({
               ...value,
-              minute: cycleMinute(value.minute, 1),
+              minute: cycleMinuteForInterval(value.minute, 1, practiceInterval),
             })
           }
           onDecrement={() =>
             onChange({
               ...value,
-              minute: cycleMinute(value.minute, -1),
+              minute: cycleMinuteForInterval(value.minute, -1, practiceInterval),
             })
           }
           decrementTestID="minute-decrement-button"
@@ -111,24 +117,31 @@ function ControlCard({
   onDecrement,
   decrementTestID,
   incrementTestID,
+  disabled = false,
 }: ControlCardProps) {
   return (
-    <View style={styles.controlCard}>
+    <View style={[styles.controlCard, disabled && styles.controlCardDisabled]}>
       <Text style={styles.controlLabel}>{label}</Text>
       <Text style={styles.controlValue}>{value}</Text>
       <View style={styles.controlButtons}>
         <Pressable
           accessibilityRole="button"
+          disabled={disabled}
           onPress={onDecrement}
-          style={styles.controlButton}
+          style={[styles.controlButton, disabled && styles.controlButtonDisabled]}
           testID={decrementTestID}
         >
           <Text style={styles.controlButtonText}>-</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
+          disabled={disabled}
           onPress={onIncrement}
-          style={[styles.controlButton, styles.controlButtonAccent]}
+          style={[
+            styles.controlButton,
+            styles.controlButtonAccent,
+            disabled && styles.controlButtonDisabled,
+          ]}
           testID={incrementTestID}
         >
           <Text style={styles.controlButtonText}>+</Text>
@@ -166,6 +179,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 10,
   },
+  controlCardDisabled: {
+    opacity: 0.8,
+  },
   controlLabel: {
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
@@ -195,6 +211,9 @@ const styles = StyleSheet.create({
   },
   controlButtonAccent: {
     backgroundColor: palette.teal,
+  },
+  controlButtonDisabled: {
+    opacity: 0.35,
   },
   controlButtonText: {
     color: palette.ink,

@@ -10,14 +10,14 @@ import {
 import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { Hour12, Meridiem, TimeValue } from '../types/time';
+import type { Hour12, Meridiem, PracticeInterval, TimeValue } from '../types/time';
 import {
   applyMinuteDrag,
   angleFromTouch,
   deriveHourFromAngle,
   formatTimeValue,
   getClockHandAngles,
-  snapMinuteFromAngle,
+  snapMinuteFromAngleForInterval,
 } from '../utils/time';
 
 type AnalogClockProps = {
@@ -28,6 +28,7 @@ type AnalogClockProps = {
   showMeridiemToggle?: boolean;
   showTimePreview?: boolean;
   onMeridiemChange?: (meridiem: Meridiem) => void;
+  practiceInterval?: PracticeInterval;
 };
 
 type HandName = 'hour' | 'minute';
@@ -40,8 +41,10 @@ export function AnalogClock({
   showMeridiemToggle = false,
   showTimePreview = false,
   onMeridiemChange,
+  practiceInterval = '5-minute',
 }: AnalogClockProps) {
   const activeHandRef = useRef<HandName | null>(null);
+  const minuteInteractionEnabled = practiceInterval !== 'hours-only';
   const shellPadding = Platform.OS === 'web' ? 0 : 6;
   const webClockInteractionStyle =
     Platform.OS === 'web'
@@ -81,8 +84,15 @@ export function AnalogClock({
     const angle = angleFromTouch(locationX, locationY, size);
 
     if (hand === 'minute') {
+      if (!minuteInteractionEnabled) {
+        return;
+      }
+
       onChange(currentTime =>
-        applyMinuteDrag(currentTime, snapMinuteFromAngle(angle)),
+        applyMinuteDrag(
+          currentTime,
+          snapMinuteFromAngleForInterval(angle, practiceInterval),
+        ),
       );
 
       return;
@@ -99,13 +109,9 @@ export function AnalogClock({
       return;
     }
 
-    activeHandRef.current = pickHand(
-      event,
-      size,
-      hourTip,
-      minuteTip,
-      radius,
-    );
+    activeHandRef.current = minuteInteractionEnabled
+      ? pickHand(event, size, hourTip, minuteTip, radius)
+      : 'hour';
 
     if (activeHandRef.current) {
       updateFromTouch(event, activeHandRef.current);
