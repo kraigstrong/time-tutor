@@ -69,7 +69,7 @@ export function AnalogClock({
   const radius = size / 2;
   const hourLength = size * 0.2;
   const minuteLength = size * 0.29;
-  const numeralRadius = size * 0.34;
+  const numeralRadius = size * 0.324;
   const { hourAngle, minuteAngle } = getClockHandAngles(time);
 
   const hourTip = useMemo(
@@ -198,7 +198,7 @@ export function AnalogClock({
               <SvgText
                 fill={palette.ink}
                 fontFamily={fontFamily.display}
-                fontSize={size * 0.06}
+                fontSize={size * 0.058}
                 fontWeight="700"
                 key={`numeral-${hour}`}
                 textAnchor="middle"
