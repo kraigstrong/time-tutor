@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SettingsGearIcon } from '../components/SettingsGearIcon';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { ExerciseMode } from '../types/time';
 
@@ -69,7 +70,7 @@ export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {
               style={styles.settingsButton}
               testID="open-settings-button"
             >
-              <Text style={styles.settingsButtonText}>⚙</Text>
+              <SettingsGearIcon size={27} />
             </Pressable>
           </View>
           <Text style={styles.modePrompt}>Choose a mode</Text>
@@ -165,13 +166,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
     ...shadows.card,
-  },
-  settingsButtonText: {
-    color: palette.ink,
-    fontFamily: fontFamily.display,
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 24,
   },
   modePrompt: {
     color: palette.ink,
