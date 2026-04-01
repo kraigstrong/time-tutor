@@ -11,6 +11,7 @@ type DigitalTimeInputProps = {
   showMeridiem?: boolean;
   practiceInterval?: PracticeInterval;
   disabled?: boolean;
+  compact?: boolean;
 };
 
 type ControlCardProps = {
@@ -21,6 +22,7 @@ type ControlCardProps = {
   decrementTestID: string;
   incrementTestID: string;
   disabled?: boolean;
+  compact?: boolean;
 };
 
 export function DigitalTimeInput({
@@ -29,16 +31,18 @@ export function DigitalTimeInput({
   showMeridiem = false,
   practiceInterval = '5-minute',
   disabled = false,
+  compact = false,
 }: DigitalTimeInputProps) {
   const showMinuteControls = practiceInterval !== 'hours-only';
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Enter the time</Text>
-      <View style={styles.controlsRow}>
+    <View style={[styles.container, compact && styles.containerCompact]}>
+      <Text style={[styles.title, compact && styles.titleCompact]}>Enter the time</Text>
+      <View style={[styles.controlsRow, compact && styles.controlsRowCompact]}>
         <ControlCard
           label="Hour"
           value={String(value.hour12)}
+          compact={compact}
           disabled={disabled}
           onIncrement={() =>
             onChange({
@@ -58,6 +62,7 @@ export function DigitalTimeInput({
         <ControlCard
           label="Minute"
           value={String(value.minute).padStart(2, '0')}
+          compact={compact}
           disabled={disabled || !showMinuteControls}
           onIncrement={() =>
             onChange({
@@ -76,7 +81,7 @@ export function DigitalTimeInput({
         />
       </View>
       {showMeridiem ? (
-        <View style={styles.meridiemRow}>
+        <View style={[styles.meridiemRow, compact && styles.meridiemRowCompact]}>
           {(['AM', 'PM'] as const).map((meridiem: Meridiem) => {
             const isSelected = meridiem === value.meridiem;
 
@@ -92,6 +97,7 @@ export function DigitalTimeInput({
                 }
                 style={[
                   styles.meridiemChip,
+                  compact && styles.meridiemChipCompact,
                   isSelected && styles.meridiemChipSelected,
                 ]}
                 testID={`meridiem-${meridiem.toLowerCase()}-button`}
@@ -99,6 +105,7 @@ export function DigitalTimeInput({
                 <Text
                   style={[
                     styles.meridiemChipText,
+                    compact && styles.meridiemChipTextCompact,
                     isSelected && styles.meridiemChipTextSelected,
                   ]}
                 >
@@ -121,20 +128,42 @@ function ControlCard({
   decrementTestID,
   incrementTestID,
   disabled = false,
+  compact = false,
 }: ControlCardProps) {
   return (
-    <View style={[styles.controlCard, disabled && styles.controlCardDisabled]}>
-      <Text style={styles.controlLabel}>{label}</Text>
-      <Text style={styles.controlValue}>{value}</Text>
-      <View style={styles.controlButtons}>
+    <View
+      style={[
+        styles.controlCard,
+        compact && styles.controlCardCompact,
+        disabled && styles.controlCardDisabled,
+      ]}
+    >
+      <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
+        {label}
+      </Text>
+      <Text style={[styles.controlValue, compact && styles.controlValueCompact]}>
+        {value}
+      </Text>
+      <View style={[styles.controlButtons, compact && styles.controlButtonsCompact]}>
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
           onPress={onDecrement}
-          style={[styles.controlButton, disabled && styles.controlButtonDisabled]}
+          style={[
+            styles.controlButton,
+            compact && styles.controlButtonCompact,
+            disabled && styles.controlButtonDisabled,
+          ]}
           testID={decrementTestID}
         >
-          <Text style={styles.controlButtonText}>-</Text>
+          <Text
+            style={[
+              styles.controlButtonText,
+              compact && styles.controlButtonTextCompact,
+            ]}
+          >
+            -
+          </Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -142,12 +171,20 @@ function ControlCard({
           onPress={onIncrement}
           style={[
             styles.controlButton,
+            compact && styles.controlButtonCompact,
             styles.controlButtonAccent,
             disabled && styles.controlButtonDisabled,
           ]}
           testID={incrementTestID}
         >
-          <Text style={styles.controlButtonText}>+</Text>
+          <Text
+            style={[
+              styles.controlButtonText,
+              compact && styles.controlButtonTextCompact,
+            ]}
+          >
+            +
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -162,6 +199,12 @@ const styles = StyleSheet.create({
     gap: 18,
     ...shadows.card,
   },
+  containerCompact: {
+    borderRadius: 24,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
@@ -169,9 +212,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
+  titleCompact: {
+    fontSize: 18,
+  },
   controlsRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  controlsRowCompact: {
+    gap: 10,
   },
   controlCard: {
     flex: 1,
@@ -181,6 +230,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     gap: 10,
+  },
+  controlCardCompact: {
+    borderRadius: 18,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
   },
   controlCardDisabled: {
     opacity: 0.8,
@@ -193,6 +248,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+  controlLabelCompact: {
+    fontSize: 12,
+  },
   controlValue: {
     color: palette.ink,
     fontFamily: fontFamily.display,
@@ -200,9 +258,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
+  controlValueCompact: {
+    fontSize: 30,
+  },
   controlButtons: {
     flexDirection: 'row',
     gap: 10,
+  },
+  controlButtonsCompact: {
+    gap: 8,
   },
   controlButton: {
     alignItems: 'center',
@@ -211,6 +275,10 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     width: 44,
+  },
+  controlButtonCompact: {
+    height: 36,
+    width: 36,
   },
   controlButtonAccent: {
     backgroundColor: palette.teal,
@@ -224,9 +292,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
   },
+  controlButtonTextCompact: {
+    fontSize: 20,
+  },
   meridiemRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  meridiemRowCompact: {
+    gap: 10,
   },
   meridiemChip: {
     alignItems: 'center',
@@ -234,6 +308,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     flex: 1,
     paddingVertical: 14,
+  },
+  meridiemChipCompact: {
+    paddingVertical: 10,
   },
   meridiemChipSelected: {
     backgroundColor: palette.coral,
@@ -243,6 +320,9 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 18,
     fontWeight: '700',
+  },
+  meridiemChipTextCompact: {
+    fontSize: 15,
   },
   meridiemChipTextSelected: {
     color: palette.white,

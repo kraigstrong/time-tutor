@@ -54,6 +54,7 @@ export function ChallengeScreen({
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useCompactDigitalInput = !isTablet;
   const contentMaxWidth = Math.min(
     width - 24,
     isWideWeb ? 1180 : isTablet ? 860 : 620,
@@ -399,6 +400,7 @@ export function ChallengeScreen({
                   </View>
                 ) : (
                   <DigitalTimeInput
+                    compact={useCompactDigitalInput}
                     disabled={runStatus !== 'running' || isAdvancing}
                     onChange={handleDigitalAnswerChange}
                     practiceInterval={practiceInterval}

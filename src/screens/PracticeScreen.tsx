@@ -105,6 +105,7 @@ export function PracticeScreen({
 
   const isTablet = width >= 768;
   const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useCompactDigitalInput = !isTablet;
   const contentMaxWidth = Math.min(
     width - 24,
     isWideWeb ? 1180 : isTablet ? 860 : 620,
@@ -116,6 +117,10 @@ export function PracticeScreen({
     ),
     260,
   );
+  const promptClockSize =
+    isWideWeb && mode === 'analog-to-digital'
+      ? Math.max(clockSize - 44, 280)
+      : clockSize;
   const activeAnswer =
     mode === 'digital-to-analog' ? analogAnswer : digitalAnswer;
   const showSuccessOverlay = Boolean(result?.isCorrect);
@@ -322,7 +327,14 @@ export function PracticeScreen({
                 isWideWeb && styles.practicePromptColumn,
               ]}
             >
-              <View style={styles.promptCard}>
+              <View
+                style={[
+                  styles.promptCard,
+                  isWideWeb &&
+                    mode === 'analog-to-digital' &&
+                    styles.promptCardCompact,
+                ]}
+              >
                 {mode === 'digital-to-analog' ? (
                   <>
                     <Text style={styles.promptLabel}>Match this digital time</Text>
@@ -335,8 +347,13 @@ export function PracticeScreen({
                 ) : (
                   <>
                     <Text style={styles.promptLabel}>Read this analog clock</Text>
-                    <View style={styles.promptClockWrap}>
-                      <AnalogClock size={clockSize} time={promptTime} />
+                    <View
+                      style={[
+                        styles.promptClockWrap,
+                        isWideWeb && styles.promptClockWrapCompact,
+                      ]}
+                    >
+                      <AnalogClock size={promptClockSize} time={promptTime} />
                     </View>
                   </>
                 )}
@@ -374,6 +391,7 @@ export function PracticeScreen({
                 ) : (
                   <View style={styles.answerOverlayWrap}>
                     <DigitalTimeInput
+                      compact={useCompactDigitalInput}
                       onChange={handleDigitalAnswerChange}
                       practiceInterval={practiceInterval}
                       showMeridiem={showMeridiem}
@@ -499,6 +517,10 @@ const styles = StyleSheet.create({
     padding: 22,
     ...shadows.card,
   },
+  promptCardCompact: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
   promptLabel: {
     color: '#D8E5F0',
     fontFamily: fontFamily.body,
@@ -520,6 +542,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 18,
     paddingBottom: Platform.OS === 'web' ? 14 : 0,
+  },
+  promptClockWrapCompact: {
+    marginTop: 12,
+    paddingBottom: 8,
   },
   answerCard: {
     backgroundColor: palette.surface,
