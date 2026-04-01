@@ -104,9 +104,16 @@ export function PracticeScreen({
   const { width } = useWindowDimensions();
 
   const isTablet = width >= 768;
-  const contentMaxWidth = Math.min(width - 24, isTablet ? 860 : 620);
+  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const contentMaxWidth = Math.min(
+    width - 24,
+    isWideWeb ? 1180 : isTablet ? 860 : 620,
+  );
   const clockSize = Math.max(
-    Math.min(contentMaxWidth * (isTablet ? 0.48 : 0.78), isTablet ? 420 : 340),
+    Math.min(
+      contentMaxWidth * (isWideWeb ? 0.29 : isTablet ? 0.48 : 0.78),
+      isWideWeb ? 360 : isTablet ? 420 : 340,
+    ),
     260,
   );
   const activeAnswer =
@@ -303,93 +310,114 @@ export function PracticeScreen({
             </View>
           </View>
 
-          <View style={styles.promptCard}>
-            {mode === 'digital-to-analog' ? (
-              <>
-                <Text style={styles.promptLabel}>Match this digital time</Text>
-                <Text style={styles.promptTime} testID="prompt-time">
-                  {formatTimeValue(promptTime, {
-                    includeMeridiem: showMeridiem,
-                  })}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.promptLabel}>Read this analog clock</Text>
-                <View style={styles.promptClockWrap}>
-                  <AnalogClock size={clockSize} time={promptTime} />
-                </View>
-              </>
-            )}
-          </View>
-
-          <View style={styles.answerCard}>
-            <Text style={styles.cardEyebrow}>Your answer</Text>
-            {mode === 'digital-to-analog' ? (
-              <View style={styles.answerOverlayWrap}>
-                <AnalogClock
-                  interactive
-                  onChange={handleAnalogAnswerChange}
-                  onInteractionEnd={() => setClockInteractionActive(false)}
-                  onInteractionStart={() => setClockInteractionActive(true)}
-                  onMeridiemChange={meridiem =>
-                    setAnalogAnswer(current => ({
-                      ...current,
-                      meridiem,
-                    }))
-                  }
-                  practiceInterval={practiceInterval}
-                  size={clockSize}
-                  time={analogAnswer}
-                />
-                {successOverlay}
-                {wrongAnswerOverlay}
-              </View>
-            ) : (
-              <View style={styles.answerOverlayWrap}>
-                <DigitalTimeInput
-                  onChange={handleDigitalAnswerChange}
-                  practiceInterval={practiceInterval}
-                  showMeridiem={showMeridiem}
-                  value={digitalAnswer}
-                />
-                {successOverlay}
-                {wrongAnswerOverlay}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.actionsRow}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={showSuccessOverlay}
-              onPress={checkAnswer}
+          <View
+            style={[
+              styles.practiceLayout,
+              isWideWeb && styles.practiceLayoutWide,
+            ]}
+          >
+            <View
               style={[
-                styles.actionButton,
-                styles.primaryButton,
-                showSuccessOverlay && styles.actionButtonDisabled,
+                styles.practiceColumn,
+                isWideWeb && styles.practicePromptColumn,
               ]}
-              testID="check-answer-button"
             >
-              <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
-                Check Answer
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={showSuccessOverlay}
-              onPress={goToNextPrompt}
+              <View style={styles.promptCard}>
+                {mode === 'digital-to-analog' ? (
+                  <>
+                    <Text style={styles.promptLabel}>Match this digital time</Text>
+                    <Text style={styles.promptTime} testID="prompt-time">
+                      {formatTimeValue(promptTime, {
+                        includeMeridiem: showMeridiem,
+                      })}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.promptLabel}>Read this analog clock</Text>
+                    <View style={styles.promptClockWrap}>
+                      <AnalogClock size={clockSize} time={promptTime} />
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+
+            <View
               style={[
-                styles.actionButton,
-                styles.secondaryButton,
-                showSuccessOverlay && styles.actionButtonDisabled,
+                styles.practiceColumn,
+                isWideWeb && styles.practiceAnswerColumn,
               ]}
-              testID="next-time-button"
             >
-              <Text style={styles.actionButtonText}>
-                {showSuccessOverlay ? 'Loading next time...' : 'Next Time'}
-              </Text>
-            </Pressable>
+              <View style={styles.answerCard}>
+                <Text style={styles.cardEyebrow}>Your answer</Text>
+                {mode === 'digital-to-analog' ? (
+                  <View style={styles.answerOverlayWrap}>
+                    <AnalogClock
+                      interactive
+                      onChange={handleAnalogAnswerChange}
+                      onInteractionEnd={() => setClockInteractionActive(false)}
+                      onInteractionStart={() => setClockInteractionActive(true)}
+                      onMeridiemChange={meridiem =>
+                        setAnalogAnswer(current => ({
+                          ...current,
+                          meridiem,
+                        }))
+                      }
+                      practiceInterval={practiceInterval}
+                      size={clockSize}
+                      time={analogAnswer}
+                    />
+                    {successOverlay}
+                    {wrongAnswerOverlay}
+                  </View>
+                ) : (
+                  <View style={styles.answerOverlayWrap}>
+                    <DigitalTimeInput
+                      onChange={handleDigitalAnswerChange}
+                      practiceInterval={practiceInterval}
+                      showMeridiem={showMeridiem}
+                      value={digitalAnswer}
+                    />
+                    {successOverlay}
+                    {wrongAnswerOverlay}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.actionsRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={showSuccessOverlay}
+                  onPress={checkAnswer}
+                  style={[
+                    styles.actionButton,
+                    styles.primaryButton,
+                    showSuccessOverlay && styles.actionButtonDisabled,
+                  ]}
+                  testID="check-answer-button"
+                >
+                  <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
+                    Check Answer
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={showSuccessOverlay}
+                  onPress={goToNextPrompt}
+                  style={[
+                    styles.actionButton,
+                    styles.secondaryButton,
+                    showSuccessOverlay && styles.actionButtonDisabled,
+                  ]}
+                  testID="next-time-button"
+                >
+                  <Text style={styles.actionButtonText}>
+                    {showSuccessOverlay ? 'Loading next time...' : 'Next Time'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -413,6 +441,24 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: 16,
     width: '100%',
+  },
+  practiceLayout: {
+    gap: 16,
+  },
+  practiceLayoutWide: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+  },
+  practiceColumn: {
+    gap: 16,
+  },
+  practicePromptColumn: {
+    flex: 0.88,
+    minWidth: 0,
+  },
+  practiceAnswerColumn: {
+    flex: 1.12,
+    minWidth: 0,
   },
   headerRow: {
     alignItems: 'center',

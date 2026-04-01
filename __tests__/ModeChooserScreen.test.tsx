@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ModeChooserScreen } from '../src/screens/ModeChooserScreen';
 
 describe('ModeChooserScreen', () => {
-  it('shows practice and challenge options and keeps the web challenge disabled', () => {
+  it('shows practice and challenge options and allows challenge when available', () => {
     const onBack = jest.fn();
     const onSelectSession = jest.fn();
     const screen = render(
@@ -17,9 +17,8 @@ describe('ModeChooserScreen', () => {
       >
         <ModeChooserScreen
           challengeAvailability={{
-            enabled: false,
+            enabled: true,
             label: '1-Minute Challenge',
-            reason: 'Available in the paid mobile app',
           }}
           mode="digital-to-analog"
           onBack={onBack}
@@ -33,11 +32,10 @@ describe('ModeChooserScreen', () => {
 
     fireEvent.press(screen.getByTestId('practice-session-card'));
     fireEvent.press(screen.getByTestId('challenge-session-card'));
-    fireEvent(screen.getByTestId('challenge-session-card'), 'focus');
 
     expect(onSelectSession).toHaveBeenCalledWith('practice');
-    expect(onSelectSession).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('challenge-unavailable-tooltip')).toBeTruthy();
-    expect(screen.getByText('Available in the paid mobile app')).toBeTruthy();
+    expect(onSelectSession).toHaveBeenCalledWith('challenge');
+    expect(onSelectSession).toHaveBeenCalledTimes(2);
+    expect(screen.queryByTestId('challenge-unavailable-tooltip')).toBeNull();
   });
 });

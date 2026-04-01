@@ -6,6 +6,7 @@ import React, {
   type SetStateAction,
 } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -52,9 +53,16 @@ export function ChallengeScreen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
-  const contentMaxWidth = Math.min(width - 24, isTablet ? 860 : 620);
+  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const contentMaxWidth = Math.min(
+    width - 24,
+    isWideWeb ? 1180 : isTablet ? 860 : 620,
+  );
   const clockSize = Math.max(
-    Math.min(contentMaxWidth * (isTablet ? 0.48 : 0.78), isTablet ? 420 : 340),
+    Math.min(
+      contentMaxWidth * (isWideWeb ? 0.29 : isTablet ? 0.48 : 0.78),
+      isWideWeb ? 360 : isTablet ? 420 : 340,
+    ),
     260,
   );
   const showMeridiem = false;
@@ -259,156 +267,196 @@ export function ChallengeScreen({
             </View>
           </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statChip}>
-              <Text style={styles.statLabel}>Time left</Text>
-              <Text style={styles.statValue} testID="challenge-time-remaining">
-                {formatCountdown(timeRemaining)}
-              </Text>
-            </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statLabel}>Score</Text>
-              <Text style={styles.statValue} testID="challenge-score">
-                {score}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.promptCard}>
-            {mode === 'digital-to-analog' ? (
-              <>
-                <Text style={styles.promptLabel}>Match this digital time</Text>
-                <View style={styles.promptStage}>
-                  {promptTime ? (
-                    <Text style={styles.promptTime} testID="challenge-prompt-time">
-                      {formatTimeValue(promptTime, {
-                        includeMeridiem: showMeridiem,
-                      })}
-                    </Text>
-                  ) : (
-                    <Text style={styles.promptPlaceholder}>
-                      Tap Go when you&apos;re ready to start.
-                    </Text>
-                  )}
+          <View
+            style={[
+              styles.challengeLayout,
+              isWideWeb && styles.challengeLayoutWide,
+            ]}
+          >
+            <View
+              style={[
+                styles.challengeColumn,
+                isWideWeb && styles.challengeInfoColumn,
+              ]}
+            >
+              <View
+                style={[
+                  styles.statsRow,
+                  isWideWeb && styles.statsRowWide,
+                ]}
+              >
+                <View style={styles.statChip}>
+                  <Text style={styles.statLabel}>Time left</Text>
+                  <Text style={styles.statValue} testID="challenge-time-remaining">
+                    {formatCountdown(timeRemaining)}
+                  </Text>
                 </View>
-              </>
-            ) : (
-              <>
-                <Text style={styles.promptLabel}>Read this analog clock</Text>
-                <View style={styles.promptClockWrap}>
-                  <AnalogClock size={clockSize} time={previewClockTime} />
-                  {feedbackToastOverlay}
-                  {runStatus === 'ready' ? (
-                    <View style={styles.startOverlay} pointerEvents="box-none">
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={startRun}
-                        style={[styles.actionButton, styles.startActionButton, styles.startButton]}
-                        testID="challenge-start-button"
-                      >
-                        <Text
-                          style={[styles.actionButtonText, styles.primaryButtonText]}
-                        >
-                          Go
+                <View style={styles.statChip}>
+                  <Text style={styles.statLabel}>Score</Text>
+                  <Text style={styles.statValue} testID="challenge-score">
+                    {score}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.promptCard}>
+                {mode === 'digital-to-analog' ? (
+                  <>
+                    <Text style={styles.promptLabel}>Match this digital time</Text>
+                    <View style={styles.promptStage}>
+                      {promptTime ? (
+                        <Text style={styles.promptTime} testID="challenge-prompt-time">
+                          {formatTimeValue(promptTime, {
+                            includeMeridiem: showMeridiem,
+                          })}
                         </Text>
-                      </Pressable>
+                      ) : (
+                        <Text style={styles.promptPlaceholder}>
+                          Tap Go when you&apos;re ready to start.
+                        </Text>
+                      )}
                     </View>
-                  ) : null}
-                </View>
-              </>
-            )}
-          </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.promptLabel}>Read this analog clock</Text>
+                    <View style={styles.promptClockWrap}>
+                      <AnalogClock size={clockSize} time={previewClockTime} />
+                      {feedbackToastOverlay}
+                      {runStatus === 'ready' ? (
+                        <View style={styles.startOverlay} pointerEvents="box-none">
+                          <Pressable
+                            accessibilityRole="button"
+                            onPress={startRun}
+                            style={[
+                              styles.actionButton,
+                              styles.startActionButton,
+                              styles.startButton,
+                            ]}
+                            testID="challenge-start-button"
+                          >
+                            <Text
+                              style={[
+                                styles.actionButtonText,
+                                styles.primaryButtonText,
+                              ]}
+                            >
+                              Go
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
 
-          <View style={styles.answerCard}>
-            <Text style={styles.cardEyebrow}>Your answer</Text>
-            {mode === 'digital-to-analog' ? (
-              <View style={styles.answerClockWrap}>
-                <AnalogClock
-                  interactive={runStatus === 'running' && !isAdvancing}
-                  onChange={handleAnalogAnswerChange}
-                  onInteractionEnd={() => setClockInteractionActive(false)}
-                  onInteractionStart={() => setClockInteractionActive(true)}
-                  practiceInterval={practiceInterval}
-                  size={clockSize}
-                  showInteractionHint
-                  time={analogAnswer}
-                />
-                {feedbackToastOverlay}
-                {runStatus === 'ready' ? (
-                  <View style={styles.startOverlay} pointerEvents="box-none">
+            <View
+              style={[
+                styles.challengeColumn,
+                isWideWeb && styles.challengeAnswerColumn,
+              ]}
+            >
+              <View style={styles.answerCard}>
+                <Text style={styles.cardEyebrow}>Your answer</Text>
+                {mode === 'digital-to-analog' ? (
+                  <View style={styles.answerClockWrap}>
+                    <AnalogClock
+                      interactive={runStatus === 'running' && !isAdvancing}
+                      onChange={handleAnalogAnswerChange}
+                      onInteractionEnd={() => setClockInteractionActive(false)}
+                      onInteractionStart={() => setClockInteractionActive(true)}
+                      practiceInterval={practiceInterval}
+                      size={clockSize}
+                      showInteractionHint
+                      time={analogAnswer}
+                    />
+                    {feedbackToastOverlay}
+                    {runStatus === 'ready' ? (
+                      <View style={styles.startOverlay} pointerEvents="box-none">
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={startRun}
+                          style={[
+                            styles.actionButton,
+                            styles.startActionButton,
+                            styles.startButton,
+                          ]}
+                          testID="challenge-start-button"
+                        >
+                          <Text
+                            style={[
+                              styles.actionButtonText,
+                              styles.primaryButtonText,
+                            ]}
+                          >
+                            Go
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : (
+                  <DigitalTimeInput
+                    disabled={runStatus !== 'running' || isAdvancing}
+                    onChange={handleDigitalAnswerChange}
+                    practiceInterval={practiceInterval}
+                    showMeridiem={showMeridiem}
+                    value={digitalAnswer}
+                  />
+                )}
+              </View>
+
+              {runStatus === 'finished' ? (
+                <View style={styles.summaryCard} testID="challenge-summary">
+                  <Text style={styles.summaryTitle}>Time&apos;s up!</Text>
+                  <Text style={styles.summaryBody}>
+                    You got {score} correct in 1 minute.
+                  </Text>
+                  <View style={styles.summaryActions}>
                     <Pressable
                       accessibilityRole="button"
-                      onPress={startRun}
-                      style={[styles.actionButton, styles.startActionButton, styles.startButton]}
-                      testID="challenge-start-button"
+                      onPress={handlePlayAgain}
+                      style={[styles.actionButton, styles.primaryButton]}
+                      testID="challenge-play-again-button"
                     >
                       <Text
                         style={[styles.actionButtonText, styles.primaryButtonText]}
                       >
-                        Go
+                        Play Again
                       </Text>
                     </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={onBack}
+                      style={[styles.actionButton, styles.secondaryButton]}
+                      testID="challenge-summary-back-button"
+                    >
+                      <Text style={styles.actionButtonText}>Back</Text>
+                    </Pressable>
                   </View>
-                ) : null}
-              </View>
-            ) : (
-              <DigitalTimeInput
-                disabled={runStatus !== 'running' || isAdvancing}
-                onChange={handleDigitalAnswerChange}
-                practiceInterval={practiceInterval}
-                showMeridiem={showMeridiem}
-                value={digitalAnswer}
-              />
-            )}
-          </View>
-
-          {runStatus === 'finished' ? (
-            <View style={styles.summaryCard} testID="challenge-summary">
-              <Text style={styles.summaryTitle}>Time&apos;s up!</Text>
-              <Text style={styles.summaryBody}>
-                You got {score} correct in 1 minute.
-              </Text>
-              <View style={styles.summaryActions}>
+                </View>
+              ) : (
                 <Pressable
                   accessibilityRole="button"
-                  onPress={handlePlayAgain}
-                  style={[styles.actionButton, styles.primaryButton]}
-                  testID="challenge-play-again-button"
+                  disabled={runStatus !== 'running' || isAdvancing}
+                  onPress={checkAnswer}
+                  style={[
+                    styles.actionButton,
+                    styles.primaryButton,
+                    (runStatus !== 'running' || isAdvancing) &&
+                      styles.actionButtonDisabled,
+                  ]}
+                  testID="challenge-check-answer-button"
                 >
-                  <Text
-                    style={[styles.actionButtonText, styles.primaryButtonText]}
-                  >
-                    Play Again
+                  <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
+                    Check Answer
                   </Text>
                 </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={onBack}
-                  style={[styles.actionButton, styles.secondaryButton]}
-                  testID="challenge-summary-back-button"
-                >
-                  <Text style={styles.actionButtonText}>Back</Text>
-                </Pressable>
-              </View>
+              )}
             </View>
-          ) : (
-            <Pressable
-              accessibilityRole="button"
-              disabled={runStatus !== 'running' || isAdvancing}
-              onPress={checkAnswer}
-              style={[
-                styles.actionButton,
-                styles.primaryButton,
-                (runStatus !== 'running' || isAdvancing) &&
-                  styles.actionButtonDisabled,
-              ]}
-              testID="challenge-check-answer-button"
-            >
-              <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
-                Check Answer
-              </Text>
-            </Pressable>
-          )}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -438,6 +486,24 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: 12,
     width: '100%',
+  },
+  challengeLayout: {
+    gap: 12,
+  },
+  challengeLayoutWide: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+  },
+  challengeColumn: {
+    gap: 12,
+  },
+  challengeInfoColumn: {
+    flex: 0.88,
+    minWidth: 0,
+  },
+  challengeAnswerColumn: {
+    flex: 1.12,
+    minWidth: 0,
   },
   headerRow: {
     alignItems: 'center',
@@ -475,6 +541,9 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
+  },
+  statsRowWide: {
+    alignSelf: 'stretch',
   },
   statChip: {
     backgroundColor: palette.surface,
