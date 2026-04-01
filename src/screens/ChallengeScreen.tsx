@@ -20,14 +20,18 @@ import { AnalogClock } from '../components/AnalogClock';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
+  DigitalTimeValue,
   ExerciseMode,
   PracticeInterval,
+  TimeFormat,
   TimeValue,
 } from '../types/time';
 import {
   areTimesEqual,
   createInitialAnswer,
+  createInitialDigitalAnswer,
   formatTimeValue,
+  isDigitalAnswerCorrect,
   nextTimeValueForInterval,
   randomTimeValueForInterval,
 } from '../utils/time';
@@ -36,6 +40,7 @@ type Props = {
   mode: ExerciseMode;
   onBack: () => void;
   practiceInterval?: PracticeInterval;
+  timeFormat?: TimeFormat;
 };
 
 type RunStatus = 'ready' | 'running' | 'finished';
@@ -49,6 +54,7 @@ export function ChallengeScreen({
   mode,
   onBack,
   practiceInterval = '5-minute',
+  timeFormat = '12-hour',
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -74,15 +80,13 @@ export function ChallengeScreen({
   const [analogAnswer, setAnalogAnswer] = useState<TimeValue>(() =>
     createInitialAnswer(),
   );
-  const [digitalAnswer, setDigitalAnswer] = useState<TimeValue>(() =>
-    createInitialAnswer(),
+  const [digitalAnswer, setDigitalAnswer] = useState<DigitalTimeValue>(() =>
+    createInitialDigitalAnswer(timeFormat),
   );
   const [clockInteractionActive, setClockInteractionActive] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<FeedbackToast>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeAnswer =
-    mode === 'digital-to-analog' ? analogAnswer : digitalAnswer;
   const previewClockTime = promptTime ?? createInitialAnswer();
 
   useEffect(
@@ -128,9 +132,9 @@ export function ChallengeScreen({
     (nextPrompt: TimeValue) => {
       setPromptTime(nextPrompt);
       setAnalogAnswer(createInitialAnswer(nextPrompt.meridiem));
-      setDigitalAnswer(createInitialAnswer(nextPrompt.meridiem));
+      setDigitalAnswer(createInitialDigitalAnswer(timeFormat));
     },
-    [],
+    [timeFormat],
   );
 
   const startRun = useCallback(() => {
@@ -157,19 +161,19 @@ export function ChallengeScreen({
 
     setPromptTime(null);
     setAnalogAnswer(createInitialAnswer());
-    setDigitalAnswer(createInitialAnswer());
+    setDigitalAnswer(createInitialDigitalAnswer(timeFormat));
     setScore(0);
     setTimeRemaining(CHALLENGE_DURATION_SECONDS);
     setFeedbackToast(null);
     setIsAdvancing(false);
     setRunStatus('ready');
-  }, []);
+  }, [timeFormat]);
 
   const handleAnalogAnswerChange = (value: SetStateAction<TimeValue>) => {
     setAnalogAnswer(value);
   };
 
-  const handleDigitalAnswerChange = (value: TimeValue) => {
+  const handleDigitalAnswerChange = (value: DigitalTimeValue) => {
     setDigitalAnswer(value);
   };
 
@@ -178,9 +182,12 @@ export function ChallengeScreen({
       return;
     }
 
-    const isCorrect = areTimesEqual(activeAnswer, promptTime, {
-      includeMeridiem: showMeridiem,
-    });
+    const isCorrect =
+      mode === 'digital-to-analog'
+        ? areTimesEqual(analogAnswer, promptTime, {
+            includeMeridiem: showMeridiem,
+          })
+        : isDigitalAnswerCorrect(digitalAnswer, promptTime, timeFormat);
 
     if (isCorrect) {
       const nextPrompt = nextTimeValueForInterval(promptTime, practiceInterval);
@@ -309,6 +316,7 @@ export function ChallengeScreen({
                         <Text style={styles.promptTime} testID="challenge-prompt-time">
                           {formatTimeValue(promptTime, {
                             includeMeridiem: showMeridiem,
+                            timeFormat,
                           })}
                         </Text>
                       ) : (
@@ -405,6 +413,7 @@ export function ChallengeScreen({
                     onChange={handleDigitalAnswerChange}
                     practiceInterval={practiceInterval}
                     showMeridiem={showMeridiem}
+                    timeFormat={timeFormat}
                     value={digitalAnswer}
                   />
                 )}

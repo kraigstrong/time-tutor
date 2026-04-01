@@ -10,12 +10,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { PracticeInterval } from '../types/time';
+import type { FeatureAvailability } from '../types/features';
+import type { PracticeInterval, TimeFormat } from '../types/time';
 
 type Props = {
   interval: PracticeInterval;
   onBack: () => void;
   onSelectInterval: (interval: PracticeInterval) => void;
+  onSelectTimeFormat: (timeFormat: TimeFormat) => void;
+  timeFormat: TimeFormat;
+  timeFormat24Availability: FeatureAvailability;
 };
 
 const intervalOptions: Array<{
@@ -45,10 +49,30 @@ const intervalOptions: Array<{
   },
 ];
 
+const timeFormatOptions: Array<{
+  description: string;
+  label: string;
+  value: TimeFormat;
+}> = [
+  {
+    description: 'Show times like 3:15.',
+    label: '12-hour',
+    value: '12-hour',
+  },
+  {
+    description: 'Show times like 15:15.',
+    label: '24-hour',
+    value: '24-hour',
+  },
+];
+
 export function SettingsScreen({
   interval,
   onBack,
   onSelectInterval,
+  onSelectTimeFormat,
+  timeFormat,
+  timeFormat24Availability,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -130,6 +154,78 @@ export function SettingsScreen({
             })}
           </View>
         </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionEyebrow}>Time format</Text>
+          <Text style={styles.sectionDescription}>
+            Choose how digital times are shown and entered.
+          </Text>
+          <View style={styles.optionsColumn}>
+            {timeFormatOptions.map(option => {
+              const isSelected = option.value === timeFormat;
+              const isLocked =
+                option.value === '24-hour' && !timeFormat24Availability.enabled;
+
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isLocked }}
+                  disabled={isLocked}
+                  key={option.value}
+                  onPress={() => onSelectTimeFormat(option.value)}
+                  style={[
+                    styles.optionCard,
+                    isSelected && styles.optionCardSelected,
+                    isLocked && styles.optionCardDisabled,
+                  ]}
+                  testID={`time-format-${option.value}`}
+                >
+                  <View style={styles.optionRow}>
+                    <View
+                      style={[
+                        styles.optionIndicator,
+                        isSelected && styles.optionIndicatorSelected,
+                      ]}
+                    >
+                      {isSelected ? <View style={styles.optionIndicatorDot} /> : null}
+                    </View>
+                    <View style={styles.optionCopy}>
+                      <View style={styles.optionTitleRow}>
+                        <Text
+                          style={[
+                            styles.optionLabel,
+                            isSelected && styles.optionLabelSelected,
+                            isLocked && styles.optionLabelDisabled,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        {isLocked ? (
+                          <View style={styles.lockedBadge}>
+                            <Text style={styles.lockedBadgeText}>Locked</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text
+                        style={[
+                          styles.optionDescription,
+                          isLocked && styles.optionDescriptionDisabled,
+                        ]}
+                      >
+                        {option.description}
+                      </Text>
+                      {isLocked && timeFormat24Availability.reason ? (
+                        <Text style={styles.lockedReason}>
+                          {timeFormat24Availability.reason}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
       </View>
     </ScrollView>
   );
@@ -197,6 +293,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
+  sectionDescription: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: -6,
+  },
   optionsColumn: {
     gap: 12,
   },
@@ -211,6 +314,9 @@ const styles = StyleSheet.create({
   optionCardSelected: {
     backgroundColor: '#FFF4E8',
     borderColor: palette.coral,
+  },
+  optionCardDisabled: {
+    opacity: 0.72,
   },
   optionRow: {
     alignItems: 'center',
@@ -240,6 +346,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  optionTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
   optionLabel: {
     color: palette.ink,
     fontFamily: fontFamily.display,
@@ -249,10 +361,35 @@ const styles = StyleSheet.create({
   optionLabelSelected: {
     color: palette.coral,
   },
+  optionLabelDisabled: {
+    color: palette.inkMuted,
+  },
   optionDescription: {
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
     fontSize: 15,
     lineHeight: 22,
+  },
+  optionDescriptionDisabled: {
+    color: '#6D7A89',
+  },
+  lockedBadge: {
+    backgroundColor: palette.ring,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  lockedBadgeText: {
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  lockedReason: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
 });

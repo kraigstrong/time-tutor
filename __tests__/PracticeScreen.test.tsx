@@ -35,7 +35,9 @@ describe('PracticeScreen', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
     jest.restoreAllMocks();
     mockRandomTimeValueForInterval.mockReset();
@@ -143,6 +145,32 @@ describe('PracticeScreen', () => {
     fireEvent.press(screen.getByTestId('practice-dismiss-feedback-button'));
 
     expect(screen.queryByTestId('practice-wrong-answer-overlay')).toBeNull();
+  });
+
+  it('accepts either 24-hour equivalent when reading an analog clock', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 11,
+      meridiem: 'PM',
+      minute: 0,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <PracticeScreen
+          mode="analog-to-digital"
+          onBack={jest.fn()}
+          timeFormat="24-hour"
+        />
+      </SafeAreaProvider>,
+    );
+
+    for (let step = 0; step < 23; step += 1) {
+      fireEvent.press(screen.getByTestId('hour-increment-button'));
+    }
+
+    fireEvent.press(screen.getByTestId('check-answer-button'));
+
+    expect(screen.getByTestId('practice-success-overlay')).toBeTruthy();
   });
 
 });

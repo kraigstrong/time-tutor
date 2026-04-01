@@ -6,7 +6,12 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { ModeChooserScreen } from '../screens/ModeChooserScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import type { ExerciseMode, PracticeInterval, SessionType } from '../types/time';
+import type {
+  ExerciseMode,
+  PracticeInterval,
+  SessionType,
+  TimeFormat,
+} from '../types/time';
 import { getFeatureAvailability } from '../utils/featureAvailability';
 
 type ActiveRoute =
@@ -30,7 +35,9 @@ export function AppNavigator() {
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
   const [practiceInterval, setPracticeInterval] =
     useState<PracticeInterval>('5-minute');
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>('12-hour');
   const challengeAvailability = getFeatureAvailability('challenge-mode');
+  const timeFormat24Availability = getFeatureAvailability('time-format-24-hour');
   const [route, setRoute] = useState<ActiveRoute>(() =>
     isWeb ? getRouteFromBrowser() : { name: 'Home' },
   );
@@ -101,6 +108,7 @@ export function AppNavigator() {
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
           practiceInterval={practiceInterval}
+          timeFormat={timeFormat}
         />
       );
     }
@@ -112,6 +120,7 @@ export function AppNavigator() {
           navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
         }
         practiceInterval={practiceInterval}
+        timeFormat={timeFormat}
       />
     );
   }
@@ -139,6 +148,15 @@ export function AppNavigator() {
         interval={practiceInterval}
         onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
         onSelectInterval={setPracticeInterval}
+        onSelectTimeFormat={nextFormat => {
+          if (nextFormat === '24-hour' && !timeFormat24Availability.enabled) {
+            return;
+          }
+
+          setTimeFormat(nextFormat);
+        }}
+        timeFormat={timeFormat}
+        timeFormat24Availability={timeFormat24Availability}
       />
     );
   }

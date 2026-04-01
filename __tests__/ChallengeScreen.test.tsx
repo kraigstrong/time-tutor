@@ -182,4 +182,28 @@ describe('ChallengeScreen', () => {
       '5:15',
     );
   });
+
+  it('shows 24-hour prompt text in challenge mode when that format is selected', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 11,
+      meridiem: 'PM',
+      minute: 0,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <ChallengeScreen
+          mode="digital-to-analog"
+          onBack={jest.fn()}
+          timeFormat="24-hour"
+        />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('challenge-start-button'));
+
+    expect(screen.getByTestId('challenge-prompt-time').props.children).toBe(
+      '23:00',
+    );
+  });
 });

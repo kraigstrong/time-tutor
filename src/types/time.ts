@@ -18,6 +18,7 @@ export type PracticeInterval =
   | '5-minute'
   | '15-minute'
   | 'hours-only';
+export type TimeFormat = '12-hour' | '24-hour';
 
 export type TimeValue = {
   hour12: Hour12;
@@ -25,8 +26,16 @@ export type TimeValue = {
   meridiem: Meridiem;
 };
 
-export type SubmissionResult = {
+export type DigitalTimeValue = {
+  hour: number;
+  minute: MinuteValue;
+};
+
+export type SubmissionResult<
+  TExpected = TimeValue,
+  TActual = TimeValue,
+> = {
   isCorrect: boolean;
-  expected: TimeValue;
-  actual: TimeValue;
+  expected: TExpected;
+  actual: TActual;
 };

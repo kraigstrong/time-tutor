@@ -1,4 +1,5 @@
 import {
+  type DigitalTimeValue,
   FIFTEEN_MINUTE_STEPS,
   HOUR_ONLY_MINUTE_STEPS,
   HOURS_12,
@@ -9,6 +10,7 @@ import {
   type Meridiem,
   type MinuteValue,
   type PracticeInterval,
+  type TimeFormat,
   type TimeValue,
 } from '../types/time';
 
@@ -16,6 +18,7 @@ export const FULL_CIRCLE_DEGREES = 360;
 
 type TimeFormattingOptions = {
   includeMeridiem?: boolean;
+  timeFormat?: TimeFormat;
 };
 
 type TimeComparisonOptions = {
@@ -83,10 +86,29 @@ export function formatTimeValue(
   time: TimeValue,
   options: TimeFormattingOptions = {},
 ): string {
+  const timeFormat = options.timeFormat ?? '12-hour';
   const includeMeridiem = options.includeMeridiem ?? true;
+  if (timeFormat === '24-hour') {
+    return `${String(to24Hour(time)).padStart(2, '0')}:${String(
+      time.minute,
+    ).padStart(2, '0')}`;
+  }
+
   const base = `${time.hour12}:${String(time.minute).padStart(2, '0')}`;
 
   return includeMeridiem ? `${base} ${time.meridiem}` : base;
+}
+
+export function formatDigitalTimeValue(
+  time: DigitalTimeValue,
+  timeFormat: TimeFormat = '12-hour',
+): string {
+  const hourLabel =
+    timeFormat === '24-hour'
+      ? String(time.hour).padStart(2, '0')
+      : String(time.hour);
+
+  return `${hourLabel}:${String(time.minute).padStart(2, '0')}`;
 }
 
 export function areTimesEqual(
@@ -164,11 +186,34 @@ export function createInitialAnswer(meridiem: Meridiem = 'AM'): TimeValue {
   };
 }
 
+export function createInitialDigitalAnswer(
+  timeFormat: TimeFormat = '12-hour',
+): DigitalTimeValue {
+  return {
+    hour: timeFormat === '24-hour' ? 0 : 12,
+    minute: 0,
+  };
+}
+
 export function cycleHour(hour: Hour12, delta: number): Hour12 {
   const index = HOURS_12.indexOf(hour);
   const nextIndex = modulo(index + delta, HOURS_12.length);
 
   return HOURS_12[nextIndex] as Hour12;
+}
+
+export function cycleDigitalHour(
+  hour: number,
+  delta: number,
+  timeFormat: TimeFormat = '12-hour',
+): number {
+  if (timeFormat === '24-hour') {
+    return modulo(hour + delta, 24);
+  }
+
+  const nextHour = cycleHour(hour as Hour12, delta);
+
+  return nextHour;
 }
 
 export function cycleMinute(minute: MinuteValue, delta: number): MinuteValue {
@@ -189,6 +234,43 @@ export function cycleMinuteForInterval(
 
 export function toggleMeridiem(current: Meridiem): Meridiem {
   return current === 'AM' ? 'PM' : 'AM';
+}
+
+export function to24Hour(time: TimeValue): number {
+  const normalizedHour = time.hour12 % 12;
+
+  return time.meridiem === 'PM' ? normalizedHour + 12 : normalizedHour;
+}
+
+export function to24HourVariants(time: TimeValue): readonly DigitalTimeValue[] {
+  const baseHour = time.hour12 % 12;
+  const variants = [baseHour, baseHour + 12];
+
+  return variants.map(hour => ({
+    hour,
+    minute: time.minute,
+  }));
+}
+
+export function isDigitalTimeValueEqual(
+  left: DigitalTimeValue,
+  right: DigitalTimeValue,
+): boolean {
+  return left.hour === right.hour && left.minute === right.minute;
+}
+
+export function isDigitalAnswerCorrect(
+  actual: DigitalTimeValue,
+  expected: TimeValue,
+  timeFormat: TimeFormat = '12-hour',
+): boolean {
+  if (timeFormat === '24-hour') {
+    return to24HourVariants(expected).some(candidate =>
+      isDigitalTimeValueEqual(actual, candidate),
+    );
+  }
+
+  return actual.hour === expected.hour12 && actual.minute === expected.minute;
 }
 
 export function applyMinuteDrag(time: TimeValue, nextMinute: MinuteValue): TimeValue {

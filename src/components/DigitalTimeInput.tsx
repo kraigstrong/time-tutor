@@ -2,16 +2,24 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { Meridiem, PracticeInterval, TimeValue } from '../types/time';
-import { cycleHour, cycleMinuteForInterval } from '../utils/time';
+import type {
+  DigitalTimeValue,
+  PracticeInterval,
+  TimeFormat,
+} from '../types/time';
+import {
+  cycleDigitalHour,
+  cycleMinuteForInterval,
+} from '../utils/time';
 
 type DigitalTimeInputProps = {
-  value: TimeValue;
-  onChange: (value: TimeValue) => void;
+  value: DigitalTimeValue;
+  onChange: (value: DigitalTimeValue) => void;
   showMeridiem?: boolean;
   practiceInterval?: PracticeInterval;
   disabled?: boolean;
   compact?: boolean;
+  timeFormat?: TimeFormat;
 };
 
 type ControlCardProps = {
@@ -32,6 +40,7 @@ export function DigitalTimeInput({
   practiceInterval = '5-minute',
   disabled = false,
   compact = false,
+  timeFormat = '12-hour',
 }: DigitalTimeInputProps) {
   const showMinuteControls = practiceInterval !== 'hours-only';
 
@@ -41,19 +50,23 @@ export function DigitalTimeInput({
       <View style={[styles.controlsRow, compact && styles.controlsRowCompact]}>
         <ControlCard
           label="Hour"
-          value={String(value.hour12)}
+          value={
+            timeFormat === '24-hour'
+              ? String(value.hour).padStart(2, '0')
+              : String(value.hour)
+          }
           compact={compact}
           disabled={disabled}
           onIncrement={() =>
             onChange({
               ...value,
-              hour12: cycleHour(value.hour12, 1),
+              hour: cycleDigitalHour(value.hour, 1, timeFormat),
             })
           }
           onDecrement={() =>
             onChange({
               ...value,
-              hour12: cycleHour(value.hour12, -1),
+              hour: cycleDigitalHour(value.hour, -1, timeFormat),
             })
           }
           decrementTestID="hour-decrement-button"
@@ -80,42 +93,7 @@ export function DigitalTimeInput({
           incrementTestID="minute-increment-button"
         />
       </View>
-      {showMeridiem ? (
-        <View style={[styles.meridiemRow, compact && styles.meridiemRowCompact]}>
-          {(['AM', 'PM'] as const).map((meridiem: Meridiem) => {
-            const isSelected = meridiem === value.meridiem;
-
-            return (
-              <Pressable
-                accessibilityRole="button"
-                key={meridiem}
-                onPress={() =>
-                  onChange({
-                    ...value,
-                    meridiem,
-                  })
-                }
-                style={[
-                  styles.meridiemChip,
-                  compact && styles.meridiemChipCompact,
-                  isSelected && styles.meridiemChipSelected,
-                ]}
-                testID={`meridiem-${meridiem.toLowerCase()}-button`}
-              >
-                <Text
-                  style={[
-                    styles.meridiemChipText,
-                    compact && styles.meridiemChipTextCompact,
-                    isSelected && styles.meridiemChipTextSelected,
-                  ]}
-                >
-                  {meridiem}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
+      {showMeridiem ? null : null}
     </View>
   );
 }
@@ -141,7 +119,10 @@ function ControlCard({
       <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
         {label}
       </Text>
-      <Text style={[styles.controlValue, compact && styles.controlValueCompact]}>
+      <Text
+        style={[styles.controlValue, compact && styles.controlValueCompact]}
+        numberOfLines={1}
+      >
         {value}
       </Text>
       <View style={[styles.controlButtons, compact && styles.controlButtonsCompact]}>

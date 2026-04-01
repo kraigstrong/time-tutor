@@ -17,16 +17,21 @@ import { AnalogClock } from '../components/AnalogClock';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
+  DigitalTimeValue,
   ExerciseMode,
   PracticeInterval,
   SubmissionResult,
+  TimeFormat,
   TimeValue,
 } from '../types/time';
 import {
   areTimesEqual,
   createInitialAnswer,
+  createInitialDigitalAnswer,
+  formatDigitalTimeValue,
   formatTimeValue,
   getModeDescription,
+  isDigitalAnswerCorrect,
   nextTimeValueForInterval,
   randomTimeValueForInterval,
 } from '../utils/time';
@@ -35,7 +40,13 @@ type Props = {
   mode: ExerciseMode;
   onBack: () => void;
   practiceInterval?: PracticeInterval;
+  timeFormat?: TimeFormat;
 };
+
+type PracticeResult = SubmissionResult<
+  TimeValue,
+  TimeValue | DigitalTimeValue
+>;
 
 const SUCCESS_CONFETTI = [
   { color: '#F6BD39', delay: 0, drift: -20, leftPercent: 12, rotate: -18, top: 16 },
@@ -87,6 +98,7 @@ export function PracticeScreen({
   mode,
   onBack,
   practiceInterval = '5-minute',
+  timeFormat = '12-hour',
 }: Props) {
   const showMeridiem = false;
   const insets = useSafeAreaInsets();
@@ -96,11 +108,11 @@ export function PracticeScreen({
   const [analogAnswer, setAnalogAnswer] = useState<TimeValue>(() =>
     createInitialAnswer(promptTime.meridiem),
   );
-  const [digitalAnswer, setDigitalAnswer] = useState<TimeValue>(() =>
-    createInitialAnswer(promptTime.meridiem),
+  const [digitalAnswer, setDigitalAnswer] = useState<DigitalTimeValue>(() =>
+    createInitialDigitalAnswer(timeFormat),
   );
   const [clockInteractionActive, setClockInteractionActive] = useState(false);
-  const [result, setResult] = useState<SubmissionResult | null>(null);
+  const [result, setResult] = useState<PracticeResult | null>(null);
   const { width } = useWindowDimensions();
 
   const isTablet = width >= 768;
@@ -121,8 +133,6 @@ export function PracticeScreen({
     isWideWeb && mode === 'analog-to-digital'
       ? Math.max(clockSize - 44, 280)
       : clockSize;
-  const activeAnswer =
-    mode === 'digital-to-analog' ? analogAnswer : digitalAnswer;
   const showSuccessOverlay = Boolean(result?.isCorrect);
   const showWrongAnswerOverlay = Boolean(result && !result.isCorrect);
   const confettiValues = useRef(
@@ -134,9 +144,9 @@ export function PracticeScreen({
 
     setPromptTime(nextPrompt);
     setAnalogAnswer(createInitialAnswer(nextPrompt.meridiem));
-    setDigitalAnswer(createInitialAnswer(nextPrompt.meridiem));
+    setDigitalAnswer(createInitialDigitalAnswer(timeFormat));
     setResult(null);
-  }, [practiceInterval, promptTime]);
+  }, [practiceInterval, promptTime, timeFormat]);
 
   useEffect(() => {
     if (!result?.isCorrect) {
@@ -219,12 +229,17 @@ export function PracticeScreen({
   );
 
   const checkAnswer = () => {
+    const isCorrect =
+      mode === 'digital-to-analog'
+        ? areTimesEqual(analogAnswer, promptTime, {
+            includeMeridiem: showMeridiem,
+          })
+        : isDigitalAnswerCorrect(digitalAnswer, promptTime, timeFormat);
+
     setResult({
-      actual: activeAnswer,
+      actual: mode === 'digital-to-analog' ? analogAnswer : digitalAnswer,
       expected: promptTime,
-      isCorrect: areTimesEqual(activeAnswer, promptTime, {
-        includeMeridiem: showMeridiem,
-      }),
+      isCorrect,
     });
   };
 
@@ -233,10 +248,18 @@ export function PracticeScreen({
     setAnalogAnswer(value);
   };
 
-  const handleDigitalAnswerChange = (value: TimeValue) => {
+  const handleDigitalAnswerChange = (value: DigitalTimeValue) => {
     setResult(null);
     setDigitalAnswer(value);
   };
+
+  const formatResultValue = (value: TimeValue | DigitalTimeValue): string =>
+    'hour12' in value
+      ? formatTimeValue(value, {
+          includeMeridiem: showMeridiem,
+          timeFormat,
+        })
+      : formatDigitalTimeValue(value, timeFormat);
 
   const successOverlay = showSuccessOverlay ? (
     <View pointerEvents="none" style={styles.feedbackOverlay}>
@@ -269,9 +292,7 @@ export function PracticeScreen({
           <View style={styles.feedbackCopy}>
             <Text style={styles.feedbackToastTitle}>Try again</Text>
             <Text style={styles.feedbackToastText}>
-              {`You entered ${formatTimeValue(result.actual, {
-                includeMeridiem: showMeridiem,
-              })}`}
+              {`You entered ${formatResultValue(result.actual)}`}
             </Text>
           </View>
           <Pressable
@@ -342,6 +363,7 @@ export function PracticeScreen({
                     <Text style={styles.promptTime} testID="prompt-time">
                       {formatTimeValue(promptTime, {
                         includeMeridiem: showMeridiem,
+                        timeFormat,
                       })}
                     </Text>
                   </>
@@ -402,6 +424,7 @@ export function PracticeScreen({
                       onChange={handleDigitalAnswerChange}
                       practiceInterval={practiceInterval}
                       showMeridiem={showMeridiem}
+                      timeFormat={timeFormat}
                       value={digitalAnswer}
                     />
                     {successOverlay}

@@ -2,17 +2,22 @@ import {
   applyMinuteDrag,
   areTimesEqual,
   cycleMinute,
+  cycleDigitalHour,
   cycleMinuteForInterval,
+  createInitialDigitalAnswer,
   deriveHourFromAngle,
+  formatDigitalTimeValue,
   formatTimeValue,
   getClockHandAngles,
   getMinuteOptions,
+  isDigitalAnswerCorrect,
   nextTimeValue,
   nextTimeValueForInterval,
   randomTimeValue,
   randomTimeValueForInterval,
   snapMinuteFromAngle,
   snapMinuteFromAngleForInterval,
+  to24HourVariants,
 } from '../src/utils/time';
 
 describe('time utilities', () => {
@@ -72,6 +77,15 @@ describe('time utilities', () => {
     expect(formatTimeValue({ hour12: 12, meridiem: 'PM', minute: 0 })).toBe(
       '12:00 PM',
     );
+    expect(
+      formatTimeValue(
+        { hour12: 3, meridiem: 'PM', minute: 5 },
+        { timeFormat: '24-hour' },
+      ),
+    ).toBe('15:05');
+    expect(formatDigitalTimeValue({ hour: 23, minute: 0 }, '24-hour')).toBe(
+      '23:00',
+    );
   });
 
   it('advances and rewinds the hour when minute dragging wraps past 12', () => {
@@ -100,9 +114,53 @@ describe('time utilities', () => {
 
   it('cycles minutes using the configured interval', () => {
     expect(cycleMinute(55, 1)).toBe(0);
+    expect(cycleDigitalHour(23, 1, '24-hour')).toBe(0);
+    expect(cycleDigitalHour(12, 1, '12-hour')).toBe(1);
     expect(cycleMinuteForInterval(14, 1, '1-minute')).toBe(15);
     expect(cycleMinuteForInterval(0, 1, '15-minute')).toBe(15);
     expect(cycleMinuteForInterval(0, 1, 'hours-only')).toBe(0);
+  });
+
+  it('creates valid initial digital answers for both display formats', () => {
+    expect(createInitialDigitalAnswer('12-hour')).toEqual({
+      hour: 12,
+      minute: 0,
+    });
+    expect(createInitialDigitalAnswer('24-hour')).toEqual({
+      hour: 0,
+      minute: 0,
+    });
+  });
+
+  it('accepts both 24-hour equivalents for the same analog clock', () => {
+    expect(
+      to24HourVariants({ hour12: 11, meridiem: 'PM', minute: 0 }),
+    ).toEqual([
+      { hour: 11, minute: 0 },
+      { hour: 23, minute: 0 },
+    ]);
+
+    expect(
+      isDigitalAnswerCorrect(
+        { hour: 11, minute: 0 },
+        { hour12: 11, meridiem: 'PM', minute: 0 },
+        '24-hour',
+      ),
+    ).toBe(true);
+    expect(
+      isDigitalAnswerCorrect(
+        { hour: 23, minute: 0 },
+        { hour12: 11, meridiem: 'PM', minute: 0 },
+        '24-hour',
+      ),
+    ).toBe(true);
+    expect(
+      isDigitalAnswerCorrect(
+        { hour: 10, minute: 0 },
+        { hour12: 11, meridiem: 'PM', minute: 0 },
+        '24-hour',
+      ),
+    ).toBe(false);
   });
 
   it('picks a new visible time when generating the next prompt', () => {
