@@ -71,16 +71,14 @@ describe('PracticeScreen', () => {
 
     fireEvent.press(screen.getByTestId('check-answer-button'));
 
-    expect(screen.getByText('Correct! Nice work.')).toBeTruthy();
-    expect(screen.getByText('You matched 3:25 exactly.')).toBeTruthy();
     expect(screen.getByText('Nice work!')).toBeTruthy();
+    expect(screen.getByTestId('practice-success-overlay')).toBeTruthy();
 
     act(() => {
       jest.advanceTimersByTime(1600);
     });
 
-    expect(screen.queryByText('Correct! Nice work.')).toBeNull();
-    expect(screen.queryByText('You matched 3:25 exactly.')).toBeNull();
+    expect(screen.queryByTestId('practice-success-overlay')).toBeNull();
   });
 
   it('disables minute changes when the practice interval is hours only', () => {
@@ -119,6 +117,32 @@ describe('PracticeScreen', () => {
     fireEvent.press(screen.getByTestId('minute-increment-button'));
 
     expect(screen.getByText('15')).toBeTruthy();
+  });
+
+  it('shows a dismissible correct-time overlay on wrong answers without rendering the inline banner', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 4,
+      meridiem: 'AM',
+      minute: 15,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('check-answer-button'));
+
+    expect(screen.getByTestId('practice-wrong-answer-overlay')).toBeTruthy();
+    expect(screen.getByText('Try again')).toBeTruthy();
+    expect(screen.getByText('You entered 12:00')).toBeTruthy();
+    expect(screen.queryByText('Not quite yet.')).toBeNull();
+    expect(screen.queryByText('You entered 12:00.')).toBeNull();
+
+    fireEvent.press(screen.getByTestId('practice-dismiss-feedback-button'));
+
+    expect(screen.queryByTestId('practice-wrong-answer-overlay')).toBeNull();
   });
 
 });

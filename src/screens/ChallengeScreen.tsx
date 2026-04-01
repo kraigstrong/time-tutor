@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState, type SetStateAction } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type SetStateAction,
+} from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,19 +17,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalogClock } from '../components/AnalogClock';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
-import { ResultBanner } from '../components/ResultBanner';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
   ExerciseMode,
   PracticeInterval,
-  SubmissionResult,
   TimeValue,
 } from '../types/time';
 import {
   areTimesEqual,
   createInitialAnswer,
   formatTimeValue,
-  getModeTitle,
   nextTimeValueForInterval,
   randomTimeValueForInterval,
 } from '../utils/time';
@@ -35,8 +38,11 @@ type Props = {
 };
 
 type RunStatus = 'ready' | 'running' | 'finished';
+type FeedbackToast = 'success' | 'error' | null;
 
 const CHALLENGE_DURATION_SECONDS = 60;
+const SUCCESS_FLASH_DURATION_MS = 450;
+const ERROR_FLASH_DURATION_MS = 550;
 
 export function ChallengeScreen({
   mode,
@@ -55,27 +61,29 @@ export function ChallengeScreen({
   const [runStatus, setRunStatus] = useState<RunStatus>('ready');
   const [timeRemaining, setTimeRemaining] = useState(CHALLENGE_DURATION_SECONDS);
   const [score, setScore] = useState(0);
-  const [promptTime, setPromptTime] = useState<TimeValue>(() =>
-    randomTimeValueForInterval(practiceInterval),
-  );
+  const [promptTime, setPromptTime] = useState<TimeValue | null>(null);
   const [analogAnswer, setAnalogAnswer] = useState<TimeValue>(() =>
-    createInitialAnswer(promptTime.meridiem),
+    createInitialAnswer(),
   );
   const [digitalAnswer, setDigitalAnswer] = useState<TimeValue>(() =>
-    createInitialAnswer(promptTime.meridiem),
+    createInitialAnswer(),
   );
-  const [result, setResult] = useState<SubmissionResult | null>(null);
   const [clockInteractionActive, setClockInteractionActive] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const [feedbackToast, setFeedbackToast] = useState<FeedbackToast>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeAnswer =
     mode === 'digital-to-analog' ? analogAnswer : digitalAnswer;
+  const previewClockTime = promptTime ?? createInitialAnswer();
 
-  useEffect(() => {
-    if (runStatus !== 'ready') {
-      return;
-    }
-
-    setRunStatus('running');
-  }, [runStatus]);
+  useEffect(
+    () => () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (runStatus !== 'running') {
@@ -98,7 +106,12 @@ export function ChallengeScreen({
 
   useEffect(() => {
     if (runStatus === 'finished') {
-      setResult(null);
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = null;
+      }
+      setFeedbackToast(null);
+      setIsAdvancing(false);
     }
   }, [runStatus]);
 
@@ -107,32 +120,52 @@ export function ChallengeScreen({
       setPromptTime(nextPrompt);
       setAnalogAnswer(createInitialAnswer(nextPrompt.meridiem));
       setDigitalAnswer(createInitialAnswer(nextPrompt.meridiem));
-      setResult(null);
     },
     [],
   );
 
-  const handlePlayAgain = useCallback(() => {
+  const startRun = useCallback(() => {
     const nextPrompt = randomTimeValueForInterval(practiceInterval);
+
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = null;
+    }
 
     loadPrompt(nextPrompt);
     setScore(0);
     setTimeRemaining(CHALLENGE_DURATION_SECONDS);
-    setRunStatus('ready');
+    setFeedbackToast(null);
+    setIsAdvancing(false);
+    setRunStatus('running');
   }, [loadPrompt, practiceInterval]);
 
+  const handlePlayAgain = useCallback(() => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = null;
+    }
+
+    setPromptTime(null);
+    setAnalogAnswer(createInitialAnswer());
+    setDigitalAnswer(createInitialAnswer());
+    setScore(0);
+    setTimeRemaining(CHALLENGE_DURATION_SECONDS);
+    setFeedbackToast(null);
+    setIsAdvancing(false);
+    setRunStatus('ready');
+  }, []);
+
   const handleAnalogAnswerChange = (value: SetStateAction<TimeValue>) => {
-    setResult(null);
     setAnalogAnswer(value);
   };
 
   const handleDigitalAnswerChange = (value: TimeValue) => {
-    setResult(null);
     setDigitalAnswer(value);
   };
 
   const checkAnswer = () => {
-    if (runStatus !== 'running') {
+    if (runStatus !== 'running' || !promptTime || isAdvancing) {
       return;
     }
 
@@ -141,17 +174,56 @@ export function ChallengeScreen({
     });
 
     if (isCorrect) {
+      const nextPrompt = nextTimeValueForInterval(promptTime, practiceInterval);
+
       setScore(current => current + 1);
-      loadPrompt(nextTimeValueForInterval(promptTime, practiceInterval));
+      setFeedbackToast('success');
+      setIsAdvancing(true);
+
+      feedbackTimerRef.current = setTimeout(() => {
+        loadPrompt(nextPrompt);
+        setFeedbackToast(null);
+        setIsAdvancing(false);
+        feedbackTimerRef.current = null;
+      }, SUCCESS_FLASH_DURATION_MS);
+
       return;
     }
 
-    setResult({
-      actual: activeAnswer,
-      expected: promptTime,
-      isCorrect: false,
-    });
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = null;
+    }
+
+    setFeedbackToast('error');
+
+    feedbackTimerRef.current = setTimeout(() => {
+      setFeedbackToast(null);
+      feedbackTimerRef.current = null;
+    }, ERROR_FLASH_DURATION_MS);
   };
+
+  const feedbackToastOverlay = feedbackToast ? (
+    <View pointerEvents="none" style={styles.feedbackToastOverlay}>
+      <View
+        style={[
+          styles.feedbackToast,
+          feedbackToast === 'success' ? styles.successToast : styles.errorToast,
+        ]}
+      >
+        <Text
+          style={[
+            styles.feedbackToastText,
+            feedbackToast === 'success'
+              ? styles.successToastText
+              : styles.errorToastText,
+          ]}
+        >
+          {feedbackToast === 'success' ? 'Correct' : 'Try Again'}
+        </Text>
+      </View>
+    </View>
+  ) : null;
 
   return (
     <View style={styles.screen}>
@@ -164,7 +236,7 @@ export function ChallengeScreen({
             paddingTop: Math.max(insets.top + 12, 28),
           },
         ]}
-        scrollEnabled={!clockInteractionActive}
+        scrollEnabled={!clockInteractionActive && !isAdvancing}
         style={styles.scrollView}
       >
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
@@ -178,7 +250,7 @@ export function ChallengeScreen({
               <Text style={styles.backButtonText}>Back</Text>
             </Pressable>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>1-Minute Challenge</Text>
+              <Text style={styles.title}>Challenge Mode</Text>
               <Text style={styles.subtitle}>
                 {mode === 'digital-to-analog'
                   ? 'Set as many clocks as you can before time runs out.'
@@ -200,27 +272,48 @@ export function ChallengeScreen({
                 {score}
               </Text>
             </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statLabel}>Mode</Text>
-              <Text style={styles.statValueSmall}>{getModeTitle(mode)}</Text>
-            </View>
           </View>
 
           <View style={styles.promptCard}>
             {mode === 'digital-to-analog' ? (
               <>
                 <Text style={styles.promptLabel}>Match this digital time</Text>
-                <Text style={styles.promptTime} testID="challenge-prompt-time">
-                  {formatTimeValue(promptTime, {
-                    includeMeridiem: showMeridiem,
-                  })}
-                </Text>
+                <View style={styles.promptStage}>
+                  {promptTime ? (
+                    <Text style={styles.promptTime} testID="challenge-prompt-time">
+                      {formatTimeValue(promptTime, {
+                        includeMeridiem: showMeridiem,
+                      })}
+                    </Text>
+                  ) : (
+                    <Text style={styles.promptPlaceholder}>
+                      Tap Go when you&apos;re ready to start.
+                    </Text>
+                  )}
+                </View>
               </>
             ) : (
               <>
                 <Text style={styles.promptLabel}>Read this analog clock</Text>
                 <View style={styles.promptClockWrap}>
-                  <AnalogClock size={clockSize} time={promptTime} />
+                  <AnalogClock size={clockSize} time={previewClockTime} />
+                  {feedbackToastOverlay}
+                  {runStatus === 'ready' ? (
+                    <View style={styles.startOverlay} pointerEvents="box-none">
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={startRun}
+                        style={[styles.actionButton, styles.startActionButton, styles.startButton]}
+                        testID="challenge-start-button"
+                      >
+                        <Text
+                          style={[styles.actionButtonText, styles.primaryButtonText]}
+                        >
+                          Go
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               </>
             )}
@@ -229,18 +322,38 @@ export function ChallengeScreen({
           <View style={styles.answerCard}>
             <Text style={styles.cardEyebrow}>Your answer</Text>
             {mode === 'digital-to-analog' ? (
-              <AnalogClock
-                interactive={runStatus !== 'finished'}
-                onChange={handleAnalogAnswerChange}
-                onInteractionEnd={() => setClockInteractionActive(false)}
-                onInteractionStart={() => setClockInteractionActive(true)}
-                practiceInterval={practiceInterval}
-                size={clockSize}
-                time={analogAnswer}
-              />
+              <View style={styles.answerClockWrap}>
+                <AnalogClock
+                  interactive={runStatus === 'running' && !isAdvancing}
+                  onChange={handleAnalogAnswerChange}
+                  onInteractionEnd={() => setClockInteractionActive(false)}
+                  onInteractionStart={() => setClockInteractionActive(true)}
+                  practiceInterval={practiceInterval}
+                  size={clockSize}
+                  showInteractionHint
+                  time={analogAnswer}
+                />
+                {feedbackToastOverlay}
+                {runStatus === 'ready' ? (
+                  <View style={styles.startOverlay} pointerEvents="box-none">
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={startRun}
+                      style={[styles.actionButton, styles.startActionButton, styles.startButton]}
+                      testID="challenge-start-button"
+                    >
+                      <Text
+                        style={[styles.actionButtonText, styles.primaryButtonText]}
+                      >
+                        Go
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
             ) : (
               <DigitalTimeInput
-                disabled={runStatus === 'finished'}
+                disabled={runStatus !== 'running' || isAdvancing}
                 onChange={handleDigitalAnswerChange}
                 practiceInterval={practiceInterval}
                 showMeridiem={showMeridiem}
@@ -248,8 +361,6 @@ export function ChallengeScreen({
               />
             )}
           </View>
-
-          <ResultBanner result={result} showMeridiem={showMeridiem} />
 
           {runStatus === 'finished' ? (
             <View style={styles.summaryCard} testID="challenge-summary">
@@ -283,8 +394,14 @@ export function ChallengeScreen({
           ) : (
             <Pressable
               accessibilityRole="button"
+              disabled={runStatus !== 'running' || isAdvancing}
               onPress={checkAnswer}
-              style={[styles.actionButton, styles.primaryButton]}
+              style={[
+                styles.actionButton,
+                styles.primaryButton,
+                (runStatus !== 'running' || isAdvancing) &&
+                  styles.actionButtonDisabled,
+              ]}
               testID="challenge-check-answer-button"
             >
               <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
@@ -319,7 +436,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignSelf: 'center',
-    gap: 16,
+    gap: 12,
     width: '100%',
   },
   headerRow: {
@@ -341,7 +458,7 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   title: {
     color: palette.ink,
@@ -352,20 +469,20 @@ const styles = StyleSheet.create({
   subtitle: {
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   statChip: {
     backgroundColor: palette.surface,
     borderRadius: 24,
     flex: 1,
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     ...shadows.card,
   },
   statLabel: {
@@ -379,20 +496,15 @@ const styles = StyleSheet.create({
   statValue: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-  },
-  statValueSmall: {
-    color: palette.ink,
-    fontFamily: fontFamily.body,
-    fontSize: 16,
-    fontWeight: '700',
   },
   promptCard: {
     backgroundColor: palette.ink,
     borderRadius: 30,
-    padding: 22,
+    paddingHorizontal: 22,
+    paddingVertical: 16,
     ...shadows.card,
   },
   promptLabel: {
@@ -400,29 +512,56 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 16,
     lineHeight: 24,
-    marginTop: 18,
     textAlign: 'center',
   },
   promptTime: {
+    alignSelf: 'center',
     color: palette.white,
     fontFamily: fontFamily.display,
     fontSize: 48,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
-    marginTop: 16,
     textAlign: 'center',
+  },
+  promptStage: {
+    alignItems: 'center',
+    height: 64,
+    justifyContent: 'center',
+    marginTop: 10,
   },
   promptClockWrap: {
     alignItems: 'center',
-    marginTop: 18,
-    paddingBottom: 14,
+    marginTop: 10,
+    paddingBottom: 8,
+    position: 'relative',
+  },
+  promptPlaceholder: {
+    alignSelf: 'center',
+    color: '#D8E5F0',
+    fontFamily: fontFamily.body,
+    fontSize: 18,
+    lineHeight: 26,
+    textAlign: 'center',
   },
   answerCard: {
     backgroundColor: palette.surface,
     borderRadius: 30,
-    gap: 16,
-    padding: 20,
+    gap: 12,
+    padding: 16,
     ...shadows.card,
+  },
+  answerClockWrap: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  startOverlay: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   cardEyebrow: {
     color: palette.inkMuted,
@@ -438,6 +577,40 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 22,
     ...shadows.card,
+  },
+  feedbackToastOverlay: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  feedbackToast: {
+    borderRadius: 999,
+    borderWidth: 2,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  successToast: {
+    backgroundColor: '#E8F6ED',
+    borderColor: palette.success,
+  },
+  errorToast: {
+    backgroundColor: '#FBEAEC',
+    borderColor: palette.danger,
+  },
+  feedbackToastText: {
+    fontFamily: fontFamily.display,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  successToastText: {
+    color: palette.success,
+  },
+  errorToastText: {
+    color: palette.danger,
   },
   summaryTitle: {
     color: palette.ink,
@@ -462,11 +635,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 999,
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 52,
     paddingHorizontal: 16,
+  },
+  startButton: {
+    minWidth: 120,
+    shadowColor: '#12355B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
   },
   primaryButton: {
     backgroundColor: palette.coral,
+  },
+  startActionButton: {
+    backgroundColor: palette.success,
   },
   secondaryButton: {
     backgroundColor: palette.surfaceMuted,

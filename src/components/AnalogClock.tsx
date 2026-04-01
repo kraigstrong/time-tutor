@@ -28,6 +28,7 @@ type AnalogClockProps = {
   onInteractionEnd?: () => void;
   onInteractionStart?: () => void;
   showMeridiemToggle?: boolean;
+  showInteractionHint?: boolean;
   showTimePreview?: boolean;
   onMeridiemChange?: (meridiem: Meridiem) => void;
   practiceInterval?: PracticeInterval;
@@ -43,6 +44,7 @@ export function AnalogClock({
   onInteractionEnd,
   onInteractionStart,
   showMeridiemToggle = false,
+  showInteractionHint,
   showTimePreview = false,
   onMeridiemChange,
   practiceInterval = '5-minute',
@@ -233,7 +235,7 @@ export function AnalogClock({
           />
         </Svg>
       </View>
-      {interactive ? (
+      {showInteractionHint ?? interactive ? (
         <Text style={styles.helperText}>Tap a hand and drag it around the clock.</Text>
       ) : null}
       {showTimePreview ? (

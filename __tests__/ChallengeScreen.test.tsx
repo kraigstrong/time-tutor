@@ -64,6 +64,7 @@ describe('ChallengeScreen', () => {
       </SafeAreaProvider>,
     );
 
+    fireEvent.press(screen.getByTestId('challenge-start-button'));
     fireEvent.press(screen.getByTestId('hour-increment-button'));
     fireEvent.press(screen.getByTestId('hour-increment-button'));
     fireEvent.press(screen.getByTestId('hour-increment-button'));
@@ -74,6 +75,7 @@ describe('ChallengeScreen', () => {
 
     fireEvent.press(screen.getByTestId('challenge-check-answer-button'));
 
+    expect(screen.getByText('Correct')).toBeTruthy();
     expect(screen.getByTestId('challenge-score').props.children).toBe(1);
     expect(mockNextTimeValueForInterval).toHaveBeenCalledWith(
       {
@@ -83,6 +85,12 @@ describe('ChallengeScreen', () => {
       },
       '5-minute',
     );
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(screen.queryByText('Correct')).toBeNull();
   });
 
   it('ends the run after one minute and shows the summary card', () => {
@@ -103,6 +111,8 @@ describe('ChallengeScreen', () => {
       </SafeAreaProvider>,
     );
 
+    fireEvent.press(screen.getByTestId('challenge-start-button'));
+
     act(() => {
       jest.advanceTimersByTime(60000);
     });
@@ -111,6 +121,65 @@ describe('ChallengeScreen', () => {
     expect(screen.getByText("Time's up!")).toBeTruthy();
     expect(screen.getByTestId('challenge-time-remaining').props.children).toBe(
       '0:00',
+    );
+  });
+
+  it('shows a quick try again toast on incorrect answers without rendering the full banner', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 3,
+      meridiem: 'AM',
+      minute: 25,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('challenge-start-button'));
+    fireEvent.press(screen.getByTestId('challenge-check-answer-button'));
+
+    expect(screen.getByText('Try Again')).toBeTruthy();
+    expect(screen.queryByText('You entered 12:00.')).toBeNull();
+
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+
+    expect(screen.queryByText('Try Again')).toBeNull();
+  });
+
+  it('waits for go before starting the timer and showing the first prompt', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 5,
+      meridiem: 'AM',
+      minute: 15,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <ChallengeScreen mode="digital-to-analog" onBack={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByText("Tap Go when you're ready to start.")).toBeTruthy();
+    expect(screen.getByTestId('challenge-time-remaining').props.children).toBe(
+      '1:00',
+    );
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    expect(screen.getByTestId('challenge-time-remaining').props.children).toBe(
+      '1:00',
+    );
+
+    fireEvent.press(screen.getByTestId('challenge-start-button'));
+
+    expect(screen.getByTestId('challenge-prompt-time').props.children).toBe(
+      '5:15',
     );
   });
 });
