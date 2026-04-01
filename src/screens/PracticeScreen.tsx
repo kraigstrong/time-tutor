@@ -330,6 +330,7 @@ export function PracticeScreen({
               <View
                 style={[
                   styles.promptCard,
+                  mode === 'analog-to-digital' && styles.promptCardAnalog,
                   isWideWeb &&
                     mode === 'analog-to-digital' &&
                     styles.promptCardCompact,
@@ -346,10 +347,16 @@ export function PracticeScreen({
                   </>
                 ) : (
                   <>
-                    <Text style={styles.promptLabel}>Read this analog clock</Text>
+                    <Text
+                      style={[styles.promptLabel, styles.promptLabelAnalog]}
+                    >
+                      Read this analog clock
+                    </Text>
                     <View
                       style={[
                         styles.promptClockWrap,
+                        mode === 'analog-to-digital' &&
+                          styles.promptClockWrapAnalog,
                         isWideWeb && styles.promptClockWrapCompact,
                       ]}
                     >
@@ -517,6 +524,11 @@ const styles = StyleSheet.create({
     padding: 22,
     ...shadows.card,
   },
+  promptCardAnalog: {
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    paddingTop: 14,
+  },
   promptCardCompact: {
     paddingHorizontal: 18,
     paddingVertical: 16,
@@ -528,6 +540,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 18,
     textAlign: 'center',
+  },
+  promptLabelAnalog: {
+    marginTop: 4,
   },
   promptTime: {
     color: palette.white,
@@ -542,6 +557,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 18,
     paddingBottom: Platform.OS === 'web' ? 14 : 0,
+  },
+  promptClockWrapAnalog: {
+    marginTop: 8,
+    paddingBottom: Platform.OS === 'web' ? 8 : 0,
   },
   promptClockWrapCompact: {
     marginTop: 12,
