@@ -10,6 +10,7 @@ type DigitalTimeInputProps = {
   onChange: (value: TimeValue) => void;
   showMeridiem?: boolean;
   practiceInterval?: PracticeInterval;
+  disabled?: boolean;
 };
 
 type ControlCardProps = {
@@ -27,6 +28,7 @@ export function DigitalTimeInput({
   onChange,
   showMeridiem = false,
   practiceInterval = '5-minute',
+  disabled = false,
 }: DigitalTimeInputProps) {
   const showMinuteControls = practiceInterval !== 'hours-only';
 
@@ -37,6 +39,7 @@ export function DigitalTimeInput({
         <ControlCard
           label="Hour"
           value={String(value.hour12)}
+          disabled={disabled}
           onIncrement={() =>
             onChange({
               ...value,
@@ -55,7 +58,7 @@ export function DigitalTimeInput({
         <ControlCard
           label="Minute"
           value={String(value.minute).padStart(2, '0')}
-          disabled={!showMinuteControls}
+          disabled={disabled || !showMinuteControls}
           onIncrement={() =>
             onChange({
               ...value,

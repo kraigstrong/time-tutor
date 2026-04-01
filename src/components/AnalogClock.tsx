@@ -25,6 +25,8 @@ type AnalogClockProps = {
   size: number;
   interactive?: boolean;
   onChange?: (value: SetStateAction<TimeValue>) => void;
+  onInteractionEnd?: () => void;
+  onInteractionStart?: () => void;
   showMeridiemToggle?: boolean;
   showTimePreview?: boolean;
   onMeridiemChange?: (meridiem: Meridiem) => void;
@@ -38,6 +40,8 @@ export function AnalogClock({
   size,
   interactive = false,
   onChange,
+  onInteractionEnd,
+  onInteractionStart,
   showMeridiemToggle = false,
   showTimePreview = false,
   onMeridiemChange,
@@ -109,6 +113,7 @@ export function AnalogClock({
       return;
     }
 
+    onInteractionStart?.();
     activeHandRef.current = minuteInteractionEnabled
       ? pickHand(event, size, hourTip, minuteTip, radius)
       : 'hour';
@@ -126,12 +131,15 @@ export function AnalogClock({
 
   const handleEnd = () => {
     activeHandRef.current = null;
+    onInteractionEnd?.();
   };
 
   return (
     <View style={styles.container}>
       <View
+        onMoveShouldSetResponderCapture={() => interactive}
         onMoveShouldSetResponder={() => interactive}
+        onStartShouldSetResponderCapture={() => interactive}
         onResponderGrant={handleGrant}
         onResponderMove={handleMove}
         onResponderRelease={handleEnd}

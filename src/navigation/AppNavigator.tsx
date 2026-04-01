@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 
+import { ChallengeScreen } from '../screens/ChallengeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
+import { ModeChooserScreen } from '../screens/ModeChooserScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import type { ExerciseMode, PracticeInterval } from '../types/time';
+import type { ExerciseMode, PracticeInterval, SessionType } from '../types/time';
+import { getFeatureAvailability } from '../utils/featureAvailability';
 
 type ActiveRoute =
   | {
@@ -15,13 +18,19 @@ type ActiveRoute =
     }
   | {
       mode: ExerciseMode;
-      name: 'Practice';
+      name: 'ModeChooser';
+    }
+  | {
+      mode: ExerciseMode;
+      name: 'Session';
+      sessionType: SessionType;
     };
 
 export function AppNavigator() {
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
   const [practiceInterval, setPracticeInterval] =
     useState<PracticeInterval>('5-minute');
+  const challengeAvailability = getFeatureAvailability('challenge-mode');
   const [route, setRoute] = useState<ActiveRoute>(() =>
     isWeb ? getRouteFromBrowser() : { name: 'Home' },
   );
@@ -74,17 +83,52 @@ export function AppNavigator() {
     () => (isWeb ? 'replace' : 'push'),
     [isWeb],
   );
+  const chooserBackMode = useMemo<'push' | 'replace'>(
+    () => (isWeb ? 'replace' : 'push'),
+    [isWeb],
+  );
   const settingsBackMode = useMemo<'push' | 'replace'>(
     () => (isWeb ? 'replace' : 'push'),
     [isWeb],
   );
 
-  if (route.name === 'Practice') {
+  if (route.name === 'Session') {
+    if (route.sessionType === 'challenge') {
+      return (
+        <ChallengeScreen
+          mode={route.mode}
+          onBack={() =>
+            navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
+          }
+          practiceInterval={practiceInterval}
+        />
+      );
+    }
+
     return (
       <PracticeScreen
         mode={route.mode}
-        onBack={() => navigate({ name: 'Home' }, practiceBackMode)}
+        onBack={() =>
+          navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
+        }
         practiceInterval={practiceInterval}
+      />
+    );
+  }
+
+  if (route.name === 'ModeChooser') {
+    return (
+      <ModeChooserScreen
+        challengeAvailability={challengeAvailability}
+        mode={route.mode}
+        onBack={() => navigate({ name: 'Home' }, chooserBackMode)}
+        onSelectSession={sessionType => {
+          if (sessionType === 'challenge' && !challengeAvailability.enabled) {
+            return;
+          }
+
+          navigate({ mode: route.mode, name: 'Session', sessionType });
+        }}
       />
     );
   }
@@ -102,7 +146,7 @@ export function AppNavigator() {
   return (
     <HomeScreen
       onOpenSettings={() => navigate({ name: 'Settings' })}
-      onSelectMode={mode => navigate({ mode, name: 'Practice' })}
+      onSelectMode={mode => navigate({ mode, name: 'ModeChooser' })}
     />
   );
 }
@@ -111,6 +155,8 @@ function getRouteFromBrowser(): ActiveRoute {
   const params = new URLSearchParams(window.location.search);
   const page = params.get('page');
   const mode = params.get('mode');
+  const session = params.get('session');
+  const challengeAvailability = getFeatureAvailability('challenge-mode', 'web');
 
   if (page === 'settings') {
     return {
@@ -119,9 +165,25 @@ function getRouteFromBrowser(): ActiveRoute {
   }
 
   if (mode === 'digital-to-analog' || mode === 'analog-to-digital') {
+    if (session === 'challenge' && challengeAvailability.enabled) {
+      return {
+        mode,
+        name: 'Session',
+        sessionType: 'challenge',
+      };
+    }
+
+    if (session === 'practice') {
+      return {
+        mode,
+        name: 'Session',
+        sessionType: 'practice',
+      };
+    }
+
     return {
       mode,
-      name: 'Practice',
+      name: 'ModeChooser',
     };
   }
 
@@ -135,8 +197,13 @@ function getUrlForRoute(route: ActiveRoute): string {
 
   url.search = '';
 
-  if (route.name === 'Practice') {
+  if (route.name === 'ModeChooser') {
     url.searchParams.set('mode', route.mode);
+  }
+
+  if (route.name === 'Session') {
+    url.searchParams.set('mode', route.mode);
+    url.searchParams.set('session', route.sessionType);
   }
 
   if (route.name === 'Settings') {
@@ -147,11 +214,17 @@ function getUrlForRoute(route: ActiveRoute): string {
 }
 
 function serializeRoute(route: ActiveRoute) {
-  return route.name === 'Practice'
+  return route.name === 'Session'
     ? {
         mode: route.mode,
         name: route.name,
+        sessionType: route.sessionType,
       }
+    : route.name === 'ModeChooser'
+      ? {
+          mode: route.mode,
+          name: route.name,
+        }
     : route.name === 'Settings'
       ? {
           name: route.name,

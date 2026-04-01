@@ -53,6 +53,7 @@ export function PracticeScreen({
   const [digitalAnswer, setDigitalAnswer] = useState<TimeValue>(() =>
     createInitialAnswer(promptTime.meridiem),
   );
+  const [clockInteractionActive, setClockInteractionActive] = useState(false);
   const [result, setResult] = useState<SubmissionResult | null>(null);
   const { width } = useWindowDimensions();
 
@@ -109,6 +110,7 @@ export function PracticeScreen({
             paddingTop: Math.max(insets.top + 12, 28),
           },
         ]}
+        scrollEnabled={!clockInteractionActive}
         style={styles.scrollView}
       >
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
@@ -152,6 +154,8 @@ export function PracticeScreen({
               <AnalogClock
                 interactive
                 onChange={setAnalogAnswer}
+                onInteractionEnd={() => setClockInteractionActive(false)}
+                onInteractionStart={() => setClockInteractionActive(true)}
                 onMeridiemChange={meridiem =>
                   setAnalogAnswer(current => ({
                     ...current,

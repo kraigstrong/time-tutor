@@ -12,6 +12,7 @@ export type MinuteValue = number;
 export type Hour12 = (typeof HOURS_12)[number];
 export type Meridiem = (typeof MERIDIEMS)[number];
 export type ExerciseMode = 'digital-to-analog' | 'analog-to-digital';
+export type SessionType = 'practice' | 'challenge';
 export type PracticeInterval =
   | '1-minute'
   | '5-minute'
