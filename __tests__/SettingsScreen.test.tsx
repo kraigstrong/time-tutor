@@ -5,6 +5,25 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SettingsScreen } from '../src/screens/SettingsScreen';
 
+function solveParentalGatePrompt(prompt: string) {
+  const additionMatch = prompt.match(/^What is (\d+) \+ (\d+)\?$/);
+  if (additionMatch) {
+    return Number(additionMatch[1]) + Number(additionMatch[2]);
+  }
+
+  const subtractionMatch = prompt.match(/^What is (\d+) - (\d+)\?$/);
+  if (subtractionMatch) {
+    return Number(subtractionMatch[1]) - Number(subtractionMatch[2]);
+  }
+
+  const mixedMatch = prompt.match(/^What is (\d+) × (\d+) \+ (\d+)\?$/);
+  if (mixedMatch) {
+    return Number(mixedMatch[1]) * Number(mixedMatch[2]) + Number(mixedMatch[3]);
+  }
+
+  throw new Error(`Unrecognized parental gate prompt: ${prompt}`);
+}
+
 describe('SettingsScreen', () => {
   const originalPlatform = Platform.OS;
 
@@ -147,10 +166,11 @@ describe('SettingsScreen', () => {
     expect(screen.getByTestId('parental-gate-error')).toBeTruthy();
     expect(Linking.openURL).not.toHaveBeenCalled();
 
-    const question = screen.getByTestId('parental-gate-question').props.children;
-    const left = Number(question[1]);
-    const right = Number(question[3]);
-    fireEvent.changeText(screen.getByTestId('parental-gate-input'), String(left + right));
+    const question = screen.getByTestId('parental-gate-question').props.children as string;
+    fireEvent.changeText(
+      screen.getByTestId('parental-gate-input'),
+      String(solveParentalGatePrompt(question)),
+    );
     fireEvent.press(screen.getByTestId('parental-gate-continue'));
 
     expect(Linking.openURL).toHaveBeenCalledWith('https://timetutor.app/support');

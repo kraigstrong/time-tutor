@@ -321,7 +321,7 @@ export function SettingsScreen({
               Ask a parent to answer this before opening a website.
             </Text>
             <Text style={styles.gateQuestion} testID="parental-gate-question">
-              What is {gatePrompt.left} + {gatePrompt.right}?
+              {gatePrompt.prompt}
             </Text>
             <TextInput
               accessibilityLabel="Parental gate answer"
@@ -361,13 +361,36 @@ export function SettingsScreen({
 }
 
 function createParentalGatePrompt() {
-  const left = Math.floor(Math.random() * 8) + 2;
-  const right = Math.floor(Math.random() * 8) + 2;
+  const promptType = Math.floor(Math.random() * 3);
+
+  if (promptType === 0) {
+    const left = Math.floor(Math.random() * 36) + 24;
+    const right = Math.floor(Math.random() * 28) + 17;
+
+    return {
+      answer: left + right,
+      prompt: `What is ${left} + ${right}?`,
+    };
+  }
+
+  if (promptType === 1) {
+    const right = Math.floor(Math.random() * 19) + 11;
+    const answer = Math.floor(Math.random() * 34) + 18;
+    const left = answer + right;
+
+    return {
+      answer,
+      prompt: `What is ${left} - ${right}?`,
+    };
+  }
+
+  const multiplier = Math.floor(Math.random() * 6) + 3;
+  const multiplicand = Math.floor(Math.random() * 5) + 4;
+  const addend = Math.floor(Math.random() * 9) + 4;
 
   return {
-    answer: left + right,
-    left,
-    right,
+    answer: multiplier * multiplicand + addend,
+    prompt: `What is ${multiplier} × ${multiplicand} + ${addend}?`,
   };
 }
 
