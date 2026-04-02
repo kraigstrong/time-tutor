@@ -117,27 +117,26 @@ export function PracticeScreen({
   const [result, setResult] = useState<PracticeResult | null>(null);
   const { width } = useWindowDimensions();
 
-  const isTablet = width >= 768;
-  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useMobileWebLayout = Platform.OS === 'web';
+  const isTablet = width >= 768 && !useMobileWebLayout;
   const useCompactDigitalInput = !isTablet;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
-    isWideWeb ? 1180 : isTablet ? 860 : 620,
+    isTablet ? 860 : 620,
   );
   const clockSize = Math.max(
     Math.min(
-      contentMaxWidth * (isWideWeb ? 0.29 : isTablet ? 0.48 : 0.78),
-      isWideWeb ? 360 : isTablet ? 420 : 340,
+      contentMaxWidth * (isTablet ? 0.48 : 0.78),
+      isTablet ? 420 : 340,
     ),
     260,
   );
-  const promptClockSize =
-    isWideWeb && mode === 'analog-to-digital'
-      ? Math.max(clockSize - 44, 280)
-      : clockSize;
+  const promptClockSize = clockSize;
   const showSuccessOverlay = Boolean(result?.isCorrect);
   const showWrongAnswerOverlay = Boolean(result && !result.isCorrect);
+  const successConfettiStartY = mode === 'analog-to-digital' ? -58 : -26;
+  const successConfettiEndY = mode === 'analog-to-digital' ? 92 : 172;
   const confettiValues = useRef(
     SUCCESS_CONFETTI.map(() => new Animated.Value(0)),
   ).current;
@@ -206,7 +205,10 @@ export function PracticeScreen({
                   {
                     translateY: progress.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [-26, 172],
+                      outputRange: [
+                        successConfettiStartY,
+                        successConfettiEndY,
+                      ],
                     }),
                   },
                   {
@@ -228,7 +230,7 @@ export function PracticeScreen({
           />
         );
       }),
-    [confettiValues],
+    [confettiValues, successConfettiEndY, successConfettiStartY],
   );
 
   const checkAnswer = () => {
@@ -348,36 +350,26 @@ export function PracticeScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View
-            style={[
-              styles.practiceLayout,
-              isWideWeb && styles.practiceLayoutWide,
-            ]}
-          >
-            <View
-              style={[
-                styles.practiceColumn,
-                isWideWeb && styles.practicePromptColumn,
-              ]}
-            >
+          <View style={styles.practiceLayout}>
+            <View style={styles.practiceColumn}>
               <View
                 style={[
                   styles.promptCard,
+                  mode === 'digital-to-analog' && styles.promptCardDigital,
                   mode === 'analog-to-digital' && styles.promptCardAnalog,
-                  isWideWeb &&
-                    mode === 'analog-to-digital' &&
-                    styles.promptCardCompact,
                 ]}
               >
                 {mode === 'digital-to-analog' ? (
                   <>
                     <Text style={styles.promptLabel}>Match this digital time</Text>
-                    <Text style={styles.promptTime} testID="prompt-time">
-                      {formatTimeValue(promptTime, {
-                        includeMeridiem: showMeridiem,
-                        timeFormat,
-                      })}
-                    </Text>
+                    <View style={styles.promptStage}>
+                      <Text style={styles.promptTime} testID="prompt-time">
+                        {formatTimeValue(promptTime, {
+                          includeMeridiem: showMeridiem,
+                          timeFormat,
+                        })}
+                      </Text>
+                    </View>
                   </>
                 ) : (
                   <>
@@ -391,7 +383,6 @@ export function PracticeScreen({
                         styles.promptClockWrap,
                         mode === 'analog-to-digital' &&
                           styles.promptClockWrapAnalog,
-                        isWideWeb && styles.promptClockWrapCompact,
                       ]}
                     >
                       <AnalogClock size={promptClockSize} time={promptTime} />
@@ -401,12 +392,7 @@ export function PracticeScreen({
               </View>
             </View>
 
-            <View
-              style={[
-                styles.practiceColumn,
-                isWideWeb && styles.practiceAnswerColumn,
-              ]}
-            >
+            <View style={styles.practiceColumn}>
               <View style={styles.answerCard}>
                 <Text style={styles.cardEyebrow}>Your answer</Text>
                 {mode === 'digital-to-analog' ? (
@@ -510,20 +496,8 @@ const styles = StyleSheet.create({
   practiceLayout: {
     gap: 16,
   },
-  practiceLayoutWide: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
   practiceColumn: {
     gap: 16,
-  },
-  practicePromptColumn: {
-    flex: 0.88,
-    minWidth: 0,
-  },
-  practiceAnswerColumn: {
-    flex: 1.12,
-    minWidth: 0,
   },
   headerRow: {
     alignItems: 'center',
@@ -565,34 +539,39 @@ const styles = StyleSheet.create({
     padding: 22,
     ...shadows.card,
   },
+  promptCardDigital: {
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+  },
   promptCardAnalog: {
     paddingHorizontal: 20,
     paddingBottom: 14,
     paddingTop: 14,
-  },
-  promptCardCompact: {
-    paddingHorizontal: 18,
-    paddingVertical: 16,
   },
   promptLabel: {
     color: '#D8E5F0',
     fontFamily: fontFamily.body,
     fontSize: 16,
     lineHeight: 24,
-    marginTop: 18,
     textAlign: 'center',
   },
   promptLabelAnalog: {
     marginTop: 4,
   },
   promptTime: {
+    alignSelf: 'center',
     color: palette.white,
     fontFamily: fontFamily.display,
     fontSize: 48,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
-    marginTop: 16,
     textAlign: 'center',
+  },
+  promptStage: {
+    alignItems: 'center',
+    height: 64,
+    justifyContent: 'center',
+    marginTop: 10,
   },
   promptClockWrap: {
     alignItems: 'center',
@@ -602,10 +581,6 @@ const styles = StyleSheet.create({
   promptClockWrapAnalog: {
     marginTop: 8,
     paddingBottom: Platform.OS === 'web' ? 8 : 0,
-  },
-  promptClockWrapCompact: {
-    marginTop: 12,
-    paddingBottom: 8,
   },
   answerCard: {
     backgroundColor: palette.surface,

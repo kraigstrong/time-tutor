@@ -50,13 +50,13 @@ export function ElapsedTimeChallengeScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useMobileWebLayout = Platform.OS === 'web';
+  const isTablet = width >= 768 && !useMobileWebLayout;
   const useCompactInput = !isTablet;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
-    isWideWeb ? 1180 : isTablet ? 860 : 620,
+    isTablet ? 860 : 620,
   );
   const [runStatus, setRunStatus] = useState<RunStatus>('ready');
   const [timeRemaining, setTimeRemaining] = useState(CHALLENGE_DURATION_SECONDS);
@@ -187,6 +187,37 @@ export function ElapsedTimeChallengeScreen({
       timeFormat,
     });
 
+  const renderPromptTime = (value: TimeValue, testID: string) => {
+    const formatted = formatPromptTime(value);
+
+    if (timeFormat === '12-hour') {
+      const [mainTime, meridiem] = formatted.split(' ');
+
+      return (
+        <View style={styles.promptTimeInlineRow} testID={testID}>
+          <Text numberOfLines={1} style={styles.promptTimeMain}>
+            {mainTime}
+          </Text>
+          <Text numberOfLines={1} style={styles.promptTimeSuffix}>
+            {meridiem}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.82}
+        numberOfLines={1}
+        style={styles.promptTimeValue}
+        testID={testID}
+      >
+        {formatted}
+      </Text>
+    );
+  };
+
   const feedbackToastOverlay = feedbackToast ? (
     <View pointerEvents="none" style={styles.feedbackToastOverlay}>
       <View
@@ -254,19 +285,9 @@ export function ElapsedTimeChallengeScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View
-            style={[
-              styles.challengeLayout,
-              isWideWeb && styles.challengeLayoutWide,
-            ]}
-          >
-            <View
-              style={[
-                styles.challengeColumn,
-                isWideWeb && styles.challengeInfoColumn,
-              ]}
-            >
-              <View style={[styles.statsRow, isWideWeb && styles.statsRowWide]}>
+          <View style={styles.challengeLayout}>
+            <View style={styles.challengeColumn}>
+              <View style={styles.statsRow}>
                 <View style={styles.statChip}>
                   <Text style={styles.statLabel}>Time left</Text>
                   <Text
@@ -291,30 +312,20 @@ export function ElapsedTimeChallengeScreen({
                     <View style={styles.promptTimesRow}>
                       <View style={styles.promptTimeCard}>
                         <Text style={styles.promptTimeEyebrow}>Start</Text>
-                        <Text
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.8}
-                          numberOfLines={1}
-                          style={styles.promptTimeValue}
-                          testID="elapsed-challenge-start-time"
-                        >
-                          {formatPromptTime(promptPair[0])}
-                        </Text>
+                        {renderPromptTime(
+                          promptPair[0],
+                          'elapsed-challenge-start-time',
+                        )}
                       </View>
                       <View style={styles.connectorPill}>
                         <Text style={styles.connectorText}>to</Text>
                       </View>
                       <View style={styles.promptTimeCard}>
                         <Text style={styles.promptTimeEyebrow}>End</Text>
-                        <Text
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.8}
-                          numberOfLines={1}
-                          style={styles.promptTimeValue}
-                          testID="elapsed-challenge-end-time"
-                        >
-                          {formatPromptTime(promptPair[1])}
-                        </Text>
+                        {renderPromptTime(
+                          promptPair[1],
+                          'elapsed-challenge-end-time',
+                        )}
                       </View>
                     </View>
                   ) : (
@@ -326,12 +337,7 @@ export function ElapsedTimeChallengeScreen({
               </View>
             </View>
 
-            <View
-              style={[
-                styles.challengeColumn,
-                isWideWeb && styles.challengeAnswerColumn,
-              ]}
-            >
+            <View style={styles.challengeColumn}>
               <View style={styles.answerCard}>
                 <Text style={styles.cardEyebrow}>Your answer</Text>
                 <View style={styles.answerOverlayWrap}>
@@ -456,20 +462,8 @@ const styles = StyleSheet.create({
   challengeLayout: {
     gap: 12,
   },
-  challengeLayoutWide: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
   challengeColumn: {
     gap: 12,
-  },
-  challengeInfoColumn: {
-    flex: 0.88,
-    minWidth: 0,
-  },
-  challengeAnswerColumn: {
-    flex: 1.12,
-    minWidth: 0,
   },
   headerRow: {
     alignItems: 'center',
@@ -508,9 +502,6 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  statsRowWide: {
-    alignSelf: 'stretch',
   },
   statChip: {
     backgroundColor: palette.surface,
@@ -567,7 +558,7 @@ const styles = StyleSheet.create({
   promptTimesRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     justifyContent: 'space-between',
     width: '100%',
   },
@@ -597,14 +588,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 26,
   },
+  promptTimeInlineRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 4,
+    minWidth: 0,
+  },
+  promptTimeMain: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 21,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    lineHeight: 25,
+  },
+  promptTimeSuffix: {
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+    marginBottom: 2,
+  },
   connectorPill: {
     alignItems: 'center',
     backgroundColor: '#274B73',
     borderRadius: 999,
     justifyContent: 'center',
-    minWidth: 52,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    minWidth: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
   connectorText: {
     color: palette.white,

@@ -47,18 +47,18 @@ export function ExploreTimeScreen({
     randomTimeValueForInterval(practiceInterval),
   );
 
-  const isTablet = width >= 768;
-  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useMobileWebLayout = Platform.OS === 'web';
+  const isTablet = width >= 768 && !useMobileWebLayout;
   const useCompactDigitalInput = !isTablet;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
-    isWideWeb ? 1180 : isTablet ? 860 : 620,
+    isTablet ? 860 : 620,
   );
   const clockSize = Math.max(
     Math.min(
-      contentMaxWidth * (isWideWeb ? 0.29 : isTablet ? 0.48 : 0.78),
-      isWideWeb ? 360 : isTablet ? 420 : 340,
+      contentMaxWidth * (isTablet ? 0.48 : 0.78),
+      isTablet ? 420 : 340,
     ),
     260,
   );
@@ -126,18 +126,8 @@ export function ExploreTimeScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View
-            style={[
-              styles.exploreLayout,
-              isWideWeb && styles.exploreLayoutWide,
-            ]}
-          >
-            <View
-              style={[
-                styles.exploreColumn,
-                isWideWeb && styles.clockColumn,
-              ]}
-            >
+          <View style={styles.exploreLayout}>
+            <View style={styles.exploreColumn}>
               <View style={styles.clockCard}>
                 <Text style={styles.cardEyebrow}>Analog clock</Text>
                 <AnalogClock
@@ -156,12 +146,7 @@ export function ExploreTimeScreen({
               </View>
             </View>
 
-            <View
-              style={[
-                styles.exploreColumn,
-                isWideWeb && styles.digitalColumn,
-              ]}
-            >
+            <View style={styles.exploreColumn}>
               <DigitalTimeInput
                 compact={useCompactDigitalInput}
                 onChange={handleDigitalChange}
@@ -237,20 +222,8 @@ const styles = StyleSheet.create({
   exploreLayout: {
     gap: 16,
   },
-  exploreLayoutWide: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
   exploreColumn: {
     gap: 16,
-  },
-  clockColumn: {
-    flex: 1,
-    minWidth: 0,
-  },
-  digitalColumn: {
-    flex: 0.9,
-    minWidth: 0,
   },
   clockCard: {
     backgroundColor: palette.surface,

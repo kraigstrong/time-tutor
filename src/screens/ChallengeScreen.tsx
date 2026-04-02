@@ -61,18 +61,18 @@ export function ChallengeScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useMobileWebLayout = Platform.OS === 'web';
+  const isTablet = width >= 768 && !useMobileWebLayout;
   const useCompactDigitalInput = !isTablet;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
-    isWideWeb ? 1180 : isTablet ? 860 : 620,
+    isTablet ? 860 : 620,
   );
   const clockSize = Math.max(
     Math.min(
-      contentMaxWidth * (isWideWeb ? 0.29 : isTablet ? 0.48 : 0.78),
-      isWideWeb ? 360 : isTablet ? 420 : 340,
+      contentMaxWidth * (isTablet ? 0.48 : 0.78),
+      isTablet ? 420 : 340,
     ),
     260,
   );
@@ -291,24 +291,9 @@ export function ChallengeScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View
-            style={[
-              styles.challengeLayout,
-              isWideWeb && styles.challengeLayoutWide,
-            ]}
-          >
-            <View
-              style={[
-                styles.challengeColumn,
-                isWideWeb && styles.challengeInfoColumn,
-              ]}
-            >
-              <View
-                style={[
-                  styles.statsRow,
-                  isWideWeb && styles.statsRowWide,
-                ]}
-              >
+          <View style={styles.challengeLayout}>
+            <View style={styles.challengeColumn}>
+              <View style={styles.statsRow}>
                 <View style={styles.statChip}>
                   <Text style={styles.statLabel}>Time left</Text>
                   <Text style={styles.statValue} testID="challenge-time-remaining">
@@ -377,12 +362,7 @@ export function ChallengeScreen({
               </View>
             </View>
 
-            <View
-              style={[
-                styles.challengeColumn,
-                isWideWeb && styles.challengeAnswerColumn,
-              ]}
-            >
+            <View style={styles.challengeColumn}>
               <View style={styles.answerCard}>
                 <Text style={styles.cardEyebrow}>Your answer</Text>
                 {mode === 'digital-to-analog' ? (
@@ -522,20 +502,8 @@ const styles = StyleSheet.create({
   challengeLayout: {
     gap: 12,
   },
-  challengeLayoutWide: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
   challengeColumn: {
     gap: 12,
-  },
-  challengeInfoColumn: {
-    flex: 0.88,
-    minWidth: 0,
-  },
-  challengeAnswerColumn: {
-    flex: 1.12,
-    minWidth: 0,
   },
   headerRow: {
     alignItems: 'center',
@@ -574,9 +542,6 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  statsRowWide: {
-    alignSelf: 'stretch',
   },
   statChip: {
     backgroundColor: palette.surface,

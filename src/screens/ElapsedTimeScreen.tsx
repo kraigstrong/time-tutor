@@ -97,12 +97,12 @@ export function ElapsedTimeScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isWideWeb = Platform.OS === 'web' && width >= 1100;
+  const useMobileWebLayout = Platform.OS === 'web';
+  const isTablet = width >= 768 && !useMobileWebLayout;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
-    isWideWeb ? 1180 : isTablet ? 860 : 620,
+    isTablet ? 860 : 620,
   );
   const useCompactInput = !isTablet;
   const [promptPair, setPromptPair] = useState<PromptPair>(() =>
@@ -197,6 +197,37 @@ export function ElapsedTimeScreen({
       includeMeridiem: timeFormat === '12-hour',
       timeFormat,
     });
+
+  const renderPromptTime = (value: TimeValue, testID: string) => {
+    const formatted = formatPromptTime(value);
+
+    if (timeFormat === '12-hour') {
+      const [mainTime, meridiem] = formatted.split(' ');
+
+      return (
+        <View style={styles.promptTimeInlineRow} testID={testID}>
+          <Text numberOfLines={1} style={styles.promptTimeMain}>
+            {mainTime}
+          </Text>
+          <Text numberOfLines={1} style={styles.promptTimeSuffix}>
+            {meridiem}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.82}
+        numberOfLines={1}
+        style={styles.promptTimeValue}
+        testID={testID}
+      >
+        {formatted}
+      </Text>
+    );
+  };
 
   const successConfetti = useMemo(
     () =>
@@ -316,48 +347,27 @@ export function ElapsedTimeScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View
-            style={[
-              styles.layout,
-              isWideWeb && styles.layoutWide,
-            ]}
-          >
-            <View style={[styles.column, isWideWeb && styles.promptColumn]}>
+          <View style={styles.layout}>
+            <View style={styles.column}>
               <View style={styles.promptCard}>
                 <Text style={styles.promptLabel}>How much time passes?</Text>
                 <View style={styles.promptTimesRow}>
                   <View style={styles.promptTimeCard}>
                     <Text style={styles.promptTimeEyebrow}>Start</Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.8}
-                      numberOfLines={1}
-                      style={styles.promptTimeValue}
-                      testID="elapsed-start-time"
-                    >
-                      {formatPromptTime(promptPair[0])}
-                    </Text>
+                    {renderPromptTime(promptPair[0], 'elapsed-start-time')}
                   </View>
                   <View style={styles.connectorPill}>
                     <Text style={styles.connectorText}>to</Text>
                   </View>
                   <View style={styles.promptTimeCard}>
                     <Text style={styles.promptTimeEyebrow}>End</Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.8}
-                      numberOfLines={1}
-                      style={styles.promptTimeValue}
-                      testID="elapsed-end-time"
-                    >
-                      {formatPromptTime(promptPair[1])}
-                    </Text>
+                    {renderPromptTime(promptPair[1], 'elapsed-end-time')}
                   </View>
                 </View>
               </View>
             </View>
 
-            <View style={[styles.column, isWideWeb && styles.answerColumn]}>
+            <View style={styles.column}>
               <View style={styles.answerCard}>
                 <Text style={styles.cardEyebrow}>Elapsed time</Text>
                 <View style={styles.answerOverlayWrap}>
@@ -474,20 +484,8 @@ const styles = StyleSheet.create({
   layout: {
     gap: 16,
   },
-  layoutWide: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
   column: {
     gap: 16,
-  },
-  promptColumn: {
-    flex: 0.92,
-    minWidth: 0,
-  },
-  answerColumn: {
-    flex: 1.08,
-    minWidth: 0,
   },
   promptCard: {
     backgroundColor: palette.ink,
@@ -506,7 +504,7 @@ const styles = StyleSheet.create({
   promptTimesRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     justifyContent: 'space-between',
   },
   promptTimeCard: {
@@ -535,14 +533,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 28,
   },
+  promptTimeInlineRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 4,
+    minWidth: 0,
+  },
+  promptTimeMain: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 21,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    lineHeight: 25,
+  },
+  promptTimeSuffix: {
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+    marginBottom: 2,
+  },
   connectorPill: {
     alignItems: 'center',
     backgroundColor: '#274B73',
     borderRadius: 999,
     justifyContent: 'center',
-    minWidth: 54,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    minWidth: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
   connectorText: {
     color: palette.white,
