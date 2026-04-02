@@ -157,12 +157,11 @@ export function SettingsScreen({
         </View>
 
         <View style={[styles.content, { maxWidth: contentWidth }]}>
-          <Text style={styles.subtitle}>
-            Choose which time intervals to practice.
-          </Text>
-
           <View style={styles.card}>
             <Text style={styles.sectionEyebrow}>Practice interval</Text>
+            <Text style={styles.sectionDescription}>
+              Choose which time intervals to practice.
+            </Text>
             <View style={styles.optionsColumn}>
               {intervalOptions.map(option => {
                 const isSelected = option.value === interval;
@@ -212,7 +211,7 @@ export function SettingsScreen({
           <View style={styles.card}>
             <Text style={styles.sectionEyebrow}>Time format</Text>
             <Text style={styles.sectionDescription}>
-              Choose how digital times are shown and entered.
+              Choose how digital times are displayed.
             </Text>
             <View style={styles.optionsColumn}>
               {timeFormatOptions.map(option => {
