@@ -52,7 +52,7 @@ describe('ElapsedTimeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ElapsedTimeScreen onBack={jest.fn()} />
+        <ElapsedTimeScreen onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -76,7 +76,7 @@ describe('ElapsedTimeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ElapsedTimeScreen onBack={jest.fn()} timeFormat="24-hour" />
+        <ElapsedTimeScreen onBack={jest.fn()} onOpenSettings={jest.fn()} timeFormat="24-hour" />
       </SafeAreaProvider>,
     );
 

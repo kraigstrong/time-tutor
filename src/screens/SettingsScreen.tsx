@@ -77,6 +77,7 @@ export function SettingsScreen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentWidth = Math.min(width - 24, isTablet ? 760 : 560);
 
   return (
@@ -91,23 +92,29 @@ export function SettingsScreen({
       ]}
       style={styles.scrollView}
     >
-      <View style={[styles.content, { maxWidth: contentWidth }]}>
+      <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
         <View style={styles.headerRow}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onBack}
-            style={styles.backButton}
-            testID="settings-back-button"
-          >
-            <Text style={styles.backButtonText}>Back</Text>
-          </Pressable>
+          <View style={styles.headerSideSlot}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onBack}
+              style={styles.backButton}
+              testID="settings-back-button"
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
+          </View>
           <View style={styles.headerCopy}>
             <Text style={styles.title}>Settings</Text>
-            <Text style={styles.subtitle}>
-              Choose which time intervals to practice.
-            </Text>
           </View>
+          <View style={styles.headerSideSlot} />
         </View>
+      </View>
+
+      <View style={[styles.content, { maxWidth: contentWidth }]}>
+        <Text style={styles.subtitle}>
+          Choose which time intervals to practice.
+        </Text>
 
         <View style={styles.card}>
           <Text style={styles.sectionEyebrow}>Practice interval</Text>
@@ -152,9 +159,11 @@ export function SettingsScreen({
                 </Pressable>
               );
             })}
-          </View>
+            </View>
         </View>
+      </View>
 
+      <View style={[styles.content, { maxWidth: contentWidth }]}>
         <View style={styles.card}>
           <Text style={styles.sectionEyebrow}>Time format</Text>
           <Text style={styles.sectionDescription}>
@@ -245,10 +254,20 @@ const styles = StyleSheet.create({
     gap: 18,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 18,
+    width: '100%',
+  },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+  },
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
   },
   backButton: {
     backgroundColor: palette.surface,
@@ -263,20 +282,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerCopy: {
+    alignItems: 'center',
     flex: 1,
-    gap: 4,
+    gap: 0,
   },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: '700',
+    textAlign: 'center',
   },
   subtitle: {
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: -4,
+    textAlign: 'center',
   },
   card: {
     backgroundColor: palette.surface,

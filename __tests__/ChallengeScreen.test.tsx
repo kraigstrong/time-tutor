@@ -60,7 +60,7 @@ describe('ChallengeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} />
+        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -107,7 +107,7 @@ describe('ChallengeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} />
+        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -133,7 +133,7 @@ describe('ChallengeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} />
+        <ChallengeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -159,7 +159,7 @@ describe('ChallengeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ChallengeScreen mode="digital-to-analog" onBack={jest.fn()} />
+        <ChallengeScreen mode="digital-to-analog" onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -195,6 +195,7 @@ describe('ChallengeScreen', () => {
         <ChallengeScreen
           mode="digital-to-analog"
           onBack={jest.fn()}
+          onOpenSettings={jest.fn()}
           timeFormat="24-hour"
         />
       </SafeAreaProvider>,

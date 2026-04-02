@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ElapsedDurationInput } from '../components/ElapsedDurationInput';
+import { HeaderSettingsButton } from '../components/HeaderSettingsButton';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
   ElapsedDurationValue,
@@ -28,6 +29,7 @@ import {
 
 type Props = {
   onBack: () => void;
+  onOpenSettings: () => void;
   practiceInterval?: PracticeInterval;
   timeFormat?: TimeFormat;
 };
@@ -42,6 +44,7 @@ const ERROR_FLASH_DURATION_MS = 550;
 
 export function ElapsedTimeChallengeScreen({
   onBack,
+  onOpenSettings,
   practiceInterval = '5-minute',
   timeFormat = '12-hour',
 }: Props) {
@@ -50,6 +53,7 @@ export function ElapsedTimeChallengeScreen({
   const isTablet = width >= 768;
   const isWideWeb = Platform.OS === 'web' && width >= 1100;
   const useCompactInput = !isTablet;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
     isWideWeb ? 1180 : isTablet ? 860 : 620,
@@ -218,24 +222,38 @@ export function ElapsedTimeChallengeScreen({
         ]}
         style={styles.scrollView}
       >
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
           <View style={styles.headerRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={styles.backButton}
-              testID="elapsed-challenge-back-button"
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </Pressable>
+            <View style={styles.headerSideSlot}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={styles.backButton}
+                testID="elapsed-challenge-back-button"
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>Challenge Mode</Text>
-              <Text style={styles.subtitle}>
-                Solve as many elapsed-time problems as you can before time runs out.
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                numberOfLines={1}
+                style={styles.title}
+              >
+                Challenge Mode
               </Text>
             </View>
+            <View style={styles.headerSideSlot}>
+              <HeaderSettingsButton
+                onPress={onOpenSettings}
+                testID="elapsed-challenge-open-settings-button"
+              />
+            </View>
           </View>
+        </View>
 
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View
             style={[
               styles.challengeLayout,
@@ -274,6 +292,9 @@ export function ElapsedTimeChallengeScreen({
                       <View style={styles.promptTimeCard}>
                         <Text style={styles.promptTimeEyebrow}>Start</Text>
                         <Text
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.8}
+                          numberOfLines={1}
                           style={styles.promptTimeValue}
                           testID="elapsed-challenge-start-time"
                         >
@@ -286,6 +307,9 @@ export function ElapsedTimeChallengeScreen({
                       <View style={styles.promptTimeCard}>
                         <Text style={styles.promptTimeEyebrow}>End</Text>
                         <Text
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.8}
+                          numberOfLines={1}
                           style={styles.promptTimeValue}
                           testID="elapsed-challenge-end-time"
                         >
@@ -424,6 +448,11 @@ const styles = StyleSheet.create({
     gap: 12,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 12,
+    width: '100%',
+  },
   challengeLayout: {
     gap: 12,
   },
@@ -445,7 +474,12 @@ const styles = StyleSheet.create({
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+  },
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
   },
   backButton: {
     backgroundColor: palette.surface,
@@ -460,20 +494,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerCopy: {
+    alignItems: 'center',
     flex: 1,
-    gap: 2,
+    gap: 0,
   },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: 26,
     fontWeight: '700',
-  },
-  subtitle: {
-    color: palette.inkMuted,
-    fontFamily: fontFamily.body,
-    fontSize: 15,
-    lineHeight: 22,
+    textAlign: 'center',
   },
   statsRow: {
     flexDirection: 'row',
@@ -561,9 +591,11 @@ const styles = StyleSheet.create({
   promptTimeValue: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 24,
+    flexShrink: 1,
+    fontSize: 20,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
+    lineHeight: 26,
   },
   connectorPill: {
     alignItems: 'center',

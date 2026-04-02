@@ -49,6 +49,7 @@ describe('ExploreTimeScreen', () => {
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
         <ExploreTimeScreen
           onBack={jest.fn()}
+          onOpenSettings={jest.fn()}
           practiceInterval="5-minute"
           timeFormat="24-hour"
         />
@@ -66,7 +67,7 @@ describe('ExploreTimeScreen', () => {
   it('updates the digital controls when the analog clock changes', () => {
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <ExploreTimeScreen onBack={jest.fn()} practiceInterval="5-minute" />
+        <ExploreTimeScreen onBack={jest.fn()} onOpenSettings={jest.fn()} practiceInterval="5-minute" />
       </SafeAreaProvider>,
     );
 

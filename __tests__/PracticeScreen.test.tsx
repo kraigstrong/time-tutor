@@ -59,7 +59,7 @@ describe('PracticeScreen', () => {
     const onBack = jest.fn();
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <PracticeScreen mode="analog-to-digital" onBack={onBack} />
+        <PracticeScreen mode="analog-to-digital" onBack={onBack} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -92,7 +92,7 @@ describe('PracticeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} practiceInterval="hours-only" />
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} practiceInterval="hours-only" />
       </SafeAreaProvider>,
     );
 
@@ -112,7 +112,7 @@ describe('PracticeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} practiceInterval="15-minute" />
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} practiceInterval="15-minute" />
       </SafeAreaProvider>,
     );
 
@@ -130,7 +130,7 @@ describe('PracticeScreen', () => {
 
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} />
+        <PracticeScreen mode="analog-to-digital" onBack={jest.fn()} onOpenSettings={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -159,6 +159,7 @@ describe('PracticeScreen', () => {
         <PracticeScreen
           mode="analog-to-digital"
           onBack={jest.fn()}
+          onOpenSettings={jest.fn()}
           timeFormat="24-hour"
         />
       </SafeAreaProvider>,

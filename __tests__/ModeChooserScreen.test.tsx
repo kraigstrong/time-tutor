@@ -22,6 +22,7 @@ describe('ModeChooserScreen', () => {
           }}
           mode="digital-to-analog"
           onBack={onBack}
+          onOpenSettings={jest.fn()}
           onSelectSession={onSelectSession}
         />
       </SafeAreaProvider>,
@@ -54,6 +55,7 @@ describe('ModeChooserScreen', () => {
           }}
           mode="elapsed-time"
           onBack={jest.fn()}
+          onOpenSettings={jest.fn()}
           onSelectSession={jest.fn()}
         />
       </SafeAreaProvider>,

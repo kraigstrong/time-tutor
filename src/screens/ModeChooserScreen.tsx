@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderSettingsButton } from '../components/HeaderSettingsButton';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { FeatureAvailability } from '../types/features';
 import type { PlayableMode, SessionType } from '../types/time';
@@ -18,6 +19,7 @@ type Props = {
   challengeAvailability: FeatureAvailability;
   mode: PlayableMode;
   onBack: () => void;
+  onOpenSettings: () => void;
   onSelectSession: (sessionType: SessionType) => void;
 };
 
@@ -25,13 +27,17 @@ export function ModeChooserScreen({
   challengeAvailability,
   mode,
   onBack,
+  onOpenSettings,
   onSelectSession,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(width - 24, isTablet ? 760 : 560);
   const [showChallengeHint, setShowChallengeHint] = useState(false);
+  const accentColor = getModeAccentColor(mode);
+  const challengeBackgroundColor = getModeTintColor(mode);
 
   return (
     <ScrollView
@@ -45,33 +51,43 @@ export function ModeChooserScreen({
       ]}
       style={styles.scrollView}
     >
-      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+      <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
         <View style={styles.headerRow}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onBack}
-            style={styles.backButton}
-            testID="mode-chooser-back-button"
-          >
-            <Text style={styles.backButtonText}>Back</Text>
-          </Pressable>
-          <View style={styles.headerCopy}>
-            <Text style={styles.title}>{getHomeModeTitle(mode)}</Text>
-            <Text style={styles.subtitle}>Choose how you want to play.</Text>
-          </View>
+            <View style={styles.headerSideSlot}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={styles.backButton}
+                testID="mode-chooser-back-button"
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
+            <View style={styles.headerCopy}>
+              <Text style={styles.title}>{getHomeModeTitle(mode)}</Text>
+            </View>
+            <View style={styles.headerSideSlot}>
+              <HeaderSettingsButton
+                onPress={onOpenSettings}
+                testID="mode-chooser-open-settings-button"
+              />
+            </View>
         </View>
+      </View>
 
+      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <Text style={styles.subtitle}>Choose how you want to play.</Text>
         <View style={styles.cardColumn}>
           <Pressable
             accessibilityRole="button"
             onPress={() => onSelectSession('practice')}
-            style={[styles.optionCard, { borderColor: palette.coral }]}
+            style={[styles.optionCard, { borderColor: accentColor }]}
             testID="practice-session-card"
           >
             <View
               style={[
                 styles.optionAccent,
-                { backgroundColor: palette.coral },
+                { backgroundColor: accentColor },
               ]}
             />
             <Text style={styles.optionTitle}>Practice</Text>
@@ -98,8 +114,11 @@ export function ModeChooserScreen({
                 styles.challengeCard,
                 {
                   borderColor: challengeAvailability.enabled
-                    ? palette.gold
+                    ? accentColor
                     : palette.ring,
+                  backgroundColor: challengeAvailability.enabled
+                    ? challengeBackgroundColor
+                    : palette.surfaceMuted,
                 },
                 !challengeAvailability.enabled && styles.optionCardDisabled,
               ]}
@@ -110,7 +129,7 @@ export function ModeChooserScreen({
                   styles.optionAccent,
                   {
                     backgroundColor: challengeAvailability.enabled
-                      ? palette.gold
+                      ? accentColor
                       : palette.ring,
                   },
                 ]}
@@ -137,7 +156,7 @@ export function ModeChooserScreen({
                     styles.optionDescriptionDisabled,
                 ]}
               >
-                Answer as many clocks as you can in one minute.
+                Answer as many questions as you can in one minute.
               </Text>
             </Pressable>
 
@@ -157,6 +176,32 @@ export function ModeChooserScreen({
   );
 }
 
+function getModeAccentColor(mode: PlayableMode): string {
+  switch (mode) {
+    case 'digital-to-analog':
+      return '#E49A33';
+    case 'analog-to-digital':
+      return '#2D8F87';
+    case 'elapsed-time':
+      return '#556CD6';
+    default:
+      return palette.coral;
+  }
+}
+
+function getModeTintColor(mode: PlayableMode): string {
+  switch (mode) {
+    case 'digital-to-analog':
+      return '#FFF6E8';
+    case 'analog-to-digital':
+      return '#EFF9F5';
+    case 'elapsed-time':
+      return '#F1F4FF';
+    default:
+      return '#FFF7E7';
+  }
+}
+
 const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: palette.background,
@@ -171,15 +216,26 @@ const styles = StyleSheet.create({
     gap: 18,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 18,
+    width: '100%',
+  },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+  },
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
   },
   backButton: {
     backgroundColor: palette.surface,
     borderRadius: 999,
-    paddingHorizontal: 16,
+    minWidth: 68,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   backButtonText: {
@@ -189,20 +245,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerCopy: {
+    alignItems: 'center',
     flex: 1,
-    gap: 4,
+    gap: 0,
   },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: 26,
     fontWeight: '700',
+    textAlign: 'center',
   },
   subtitle: {
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: -4,
+    textAlign: 'center',
   },
   cardColumn: {
     gap: 14,

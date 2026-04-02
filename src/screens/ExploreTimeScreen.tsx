@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalogClock } from '../components/AnalogClock';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
+import { HeaderSettingsButton } from '../components/HeaderSettingsButton';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
   DigitalTimeValue,
@@ -28,12 +29,14 @@ import {
 
 type Props = {
   onBack: () => void;
+  onOpenSettings: () => void;
   practiceInterval?: PracticeInterval;
   timeFormat?: TimeFormat;
 };
 
 export function ExploreTimeScreen({
   onBack,
+  onOpenSettings,
   practiceInterval = '5-minute',
   timeFormat = '12-hour',
 }: Props) {
@@ -47,6 +50,7 @@ export function ExploreTimeScreen({
   const isTablet = width >= 768;
   const isWideWeb = Platform.OS === 'web' && width >= 1100;
   const useCompactDigitalInput = !isTablet;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
     isWideWeb ? 1180 : isTablet ? 860 : 620,
@@ -97,24 +101,31 @@ export function ExploreTimeScreen({
         scrollEnabled={!clockInteractionActive}
         style={styles.scrollView}
       >
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
           <View style={styles.headerRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={styles.backButton}
-              testID="explore-back-button"
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </Pressable>
+            <View style={styles.headerSideSlot}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={styles.backButton}
+                testID="explore-back-button"
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
             <View style={styles.headerCopy}>
               <Text style={styles.title}>Explore time</Text>
-              <Text style={styles.subtitle}>
-                Move the clock or change the time. Everything updates instantly.
-              </Text>
+            </View>
+            <View style={styles.headerSideSlot}>
+              <HeaderSettingsButton
+                onPress={onOpenSettings}
+                testID="explore-open-settings-button"
+              />
             </View>
           </View>
+        </View>
 
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View
             style={[
               styles.exploreLayout,
@@ -183,15 +194,26 @@ const styles = StyleSheet.create({
     gap: 16,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 16,
+    width: '100%',
+  },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+  },
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
   },
   backButton: {
     backgroundColor: palette.surface,
     borderRadius: 999,
-    paddingHorizontal: 16,
+    minWidth: 68,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   backButtonText: {
@@ -201,20 +223,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerCopy: {
+    alignItems: 'center',
     flex: 1,
-    gap: 4,
+    gap: 0,
   },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: '700',
-  },
-  subtitle: {
-    color: palette.inkMuted,
-    fontFamily: fontFamily.body,
-    fontSize: 16,
-    lineHeight: 24,
+    textAlign: 'center',
   },
   exploreLayout: {
     gap: 16,

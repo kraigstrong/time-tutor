@@ -110,15 +110,16 @@ export function AppNavigator() {
   if (route.name === 'Session') {
     if (route.mode === 'elapsed-time') {
       if (route.sessionType === 'challenge') {
-        return (
-          <ElapsedTimeChallengeScreen
-            onBack={() =>
-              navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
-            }
-            practiceInterval={practiceInterval}
-            timeFormat={timeFormat}
-          />
-        );
+      return (
+        <ElapsedTimeChallengeScreen
+          onBack={() =>
+            navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
+          }
+          onOpenSettings={() => navigate({ name: 'Settings' })}
+          practiceInterval={practiceInterval}
+          timeFormat={timeFormat}
+        />
+      );
       }
 
       return (
@@ -126,6 +127,7 @@ export function AppNavigator() {
           onBack={() =>
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
+          onOpenSettings={() => navigate({ name: 'Settings' })}
           practiceInterval={practiceInterval}
           timeFormat={timeFormat}
         />
@@ -139,6 +141,7 @@ export function AppNavigator() {
           onBack={() =>
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
+          onOpenSettings={() => navigate({ name: 'Settings' })}
           practiceInterval={practiceInterval}
           timeFormat={timeFormat}
         />
@@ -151,6 +154,7 @@ export function AppNavigator() {
         onBack={() =>
           navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
         }
+        onOpenSettings={() => navigate({ name: 'Settings' })}
         practiceInterval={practiceInterval}
         timeFormat={timeFormat}
       />
@@ -163,6 +167,7 @@ export function AppNavigator() {
         challengeAvailability={challengeAvailability}
         mode={route.mode}
         onBack={() => navigate({ name: 'Home' }, chooserBackMode)}
+        onOpenSettings={() => navigate({ name: 'Settings' })}
         onSelectSession={sessionType => {
           if (sessionType === 'challenge' && !challengeAvailability.enabled) {
             return;
@@ -197,6 +202,7 @@ export function AppNavigator() {
     return (
       <ExploreTimeScreen
         onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
+        onOpenSettings={() => navigate({ name: 'Settings' })}
         practiceInterval={practiceInterval}
         timeFormat={timeFormat}
       />

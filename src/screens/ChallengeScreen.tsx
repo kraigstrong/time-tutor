@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalogClock } from '../components/AnalogClock';
 import { DigitalTimeInput } from '../components/DigitalTimeInput';
+import { HeaderSettingsButton } from '../components/HeaderSettingsButton';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type {
   DigitalTimeValue,
@@ -39,6 +40,7 @@ import {
 type Props = {
   mode: ExerciseMode;
   onBack: () => void;
+  onOpenSettings: () => void;
   practiceInterval?: PracticeInterval;
   timeFormat?: TimeFormat;
 };
@@ -53,6 +55,7 @@ const ERROR_FLASH_DURATION_MS = 550;
 export function ChallengeScreen({
   mode,
   onBack,
+  onOpenSettings,
   practiceInterval = '5-minute',
   timeFormat = '12-hour',
 }: Props) {
@@ -61,6 +64,7 @@ export function ChallengeScreen({
   const isTablet = width >= 768;
   const isWideWeb = Platform.OS === 'web' && width >= 1100;
   const useCompactDigitalInput = !isTablet;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentMaxWidth = Math.min(
     width - 24,
     isWideWeb ? 1180 : isTablet ? 860 : 620,
@@ -255,26 +259,38 @@ export function ChallengeScreen({
         scrollEnabled={!clockInteractionActive && !isAdvancing}
         style={styles.scrollView}
       >
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
           <View style={styles.headerRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={styles.backButton}
-              testID="challenge-back-button"
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </Pressable>
+            <View style={styles.headerSideSlot}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={styles.backButton}
+                testID="challenge-back-button"
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>Challenge Mode</Text>
-              <Text style={styles.subtitle}>
-                {mode === 'digital-to-analog'
-                  ? 'Set as many clocks as you can before time runs out.'
-                  : 'Read as many clocks as you can before time runs out.'}
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                numberOfLines={1}
+                style={styles.title}
+              >
+                Challenge Mode
               </Text>
             </View>
+            <View style={styles.headerSideSlot}>
+              <HeaderSettingsButton
+                onPress={onOpenSettings}
+                testID="challenge-open-settings-button"
+              />
+            </View>
           </View>
+        </View>
 
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View
             style={[
               styles.challengeLayout,
@@ -498,6 +514,11 @@ const styles = StyleSheet.create({
     gap: 12,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 12,
+    width: '100%',
+  },
   challengeLayout: {
     gap: 12,
   },
@@ -519,7 +540,12 @@ const styles = StyleSheet.create({
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
+  },
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
   },
   backButton: {
     backgroundColor: palette.surface,
@@ -534,20 +560,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerCopy: {
+    alignItems: 'center',
     flex: 1,
-    gap: 2,
+    gap: 0,
   },
   title: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 34,
+    fontSize: 26,
     fontWeight: '700',
-  },
-  subtitle: {
-    color: palette.inkMuted,
-    fontFamily: fontFamily.body,
-    fontSize: 15,
-    lineHeight: 22,
+    textAlign: 'center',
   },
   statsRow: {
     flexDirection: 'row',

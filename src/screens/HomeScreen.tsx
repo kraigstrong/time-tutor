@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SettingsGearIcon } from '../components/SettingsGearIcon';
+import { HeaderSettingsButton } from '../components/HeaderSettingsButton';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { HomeMode } from '../types/time';
 
@@ -25,26 +25,26 @@ const modeCards: Array<{
   title: string;
 }> = [
   {
-    accentColor: palette.coral,
-    description: 'See a digital time, then set the analog clock to match it.',
-    mode: 'digital-to-analog',
-    title: 'Set the Clock',
-  },
-  {
-    accentColor: palette.teal,
-    description: 'Read the analog clock and enter the matching digital time.',
-    mode: 'analog-to-digital',
-    title: 'Read the Clock',
-  },
-  {
-    accentColor: palette.gold,
-    description: 'Move the clock or change the digital time and watch them sync.',
+    accentColor: '#D95D67',
+    description: 'Explore analog and digital time together.',
     mode: 'explore-time',
     title: 'Explore Time',
   },
   {
-    accentColor: palette.success,
-    description: 'See two times and figure out how much time passes between them.',
+    accentColor: '#E49A33',
+    description: 'Match the analog clock to a digital time.',
+    mode: 'digital-to-analog',
+    title: 'Set the Clock',
+  },
+  {
+    accentColor: '#2D8F87',
+    description: 'Read the analog clock and enter the time.',
+    mode: 'analog-to-digital',
+    title: 'Read the Clock',
+  },
+  {
+    accentColor: '#556CD6',
+    description: 'Figure out how much time has elapsed.',
     mode: 'elapsed-time',
     title: 'Elapsed Time',
   },
@@ -54,6 +54,7 @@ export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isTablet = width >= 768;
+  const headerMaxWidth = Math.min(width - 24, 860);
   const contentWidth = Math.min(width - 24, isTablet ? 760 : 560);
 
   return (
@@ -70,23 +71,25 @@ export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {
     >
       <View style={styles.backgroundBubbleLarge} />
       <View style={styles.backgroundBubbleSmall} />
-      <View style={[styles.content, { maxWidth: contentWidth }]}>
+      <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
         <View style={styles.headerSection}>
-          <View style={styles.headerTopRow}>
-            <View style={styles.headerSpacer} />
-            <Text style={styles.title}>Time Tutor</Text>
-            <Pressable
-              accessibilityLabel="Open settings"
-              accessibilityRole="button"
-              onPress={onOpenSettings}
-              style={styles.settingsButton}
-              testID="open-settings-button"
-            >
-              <SettingsGearIcon size={27} />
-            </Pressable>
+          <View style={styles.headerRow}>
+            <View style={styles.headerSideSlot} />
+            <View style={styles.headerCopy}>
+              <Text style={styles.title}>Time Tutor</Text>
+            </View>
+            <View style={styles.headerSideSlot}>
+              <HeaderSettingsButton
+                onPress={onOpenSettings}
+                testID="open-settings-button"
+              />
+            </View>
           </View>
           <Text style={styles.modePrompt}>Choose a mode</Text>
         </View>
+      </View>
+
+      <View style={[styles.content, { maxWidth: contentWidth }]}>
 
         <View style={styles.cardColumn}>
           {modeCards.map(card => (
@@ -106,7 +109,9 @@ export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {
                 ]}
               />
               <Text style={styles.modeTitle}>{card.title}</Text>
-              <Text style={styles.modeDescription}>{card.description}</Text>
+              <Text numberOfLines={1} style={styles.modeDescription}>
+                {card.description}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -149,40 +154,42 @@ const styles = StyleSheet.create({
     gap: 18,
     width: '100%',
   },
+  headerShell: {
+    alignSelf: 'center',
+    marginBottom: 18,
+    width: '100%',
+  },
   headerSection: {
     alignItems: 'stretch',
     gap: 8,
     paddingBottom: 6,
   },
-  headerTopRow: {
+  headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 12,
   },
-  headerSpacer: {
-    width: 44,
+  headerSideSlot: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    width: 68,
+  },
+  headerCopy: {
+    alignItems: 'center',
+    flex: 1,
   },
   title: {
     color: palette.ink,
-    flex: 1,
     fontFamily: fontFamily.display,
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '700',
     letterSpacing: 0.4,
     textAlign: 'center',
   },
-  settingsButton: {
-    alignItems: 'center',
-    backgroundColor: palette.surface,
-    borderRadius: 999,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-    ...shadows.card,
-  },
   modePrompt: {
     color: palette.ink,
     fontFamily: fontFamily.display,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
   },
