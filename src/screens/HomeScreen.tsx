@@ -187,10 +187,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modePrompt: {
-    color: palette.ink,
-    fontFamily: fontFamily.display,
-    fontSize: 22,
-    fontWeight: '700',
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 17,
+    fontWeight: '600',
+    lineHeight: 22,
     textAlign: 'center',
   },
   cardColumn: {

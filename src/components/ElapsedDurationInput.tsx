@@ -365,32 +365,30 @@ const styles = StyleSheet.create({
   },
   controlStepper: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 999,
-    height: 42,
+    height: 44,
     justifyContent: 'center',
-    width: 42,
+    width: 44,
   },
   controlStepperCompact: {
     height: 36,
     width: 36,
   },
   controlStepperAccent: {
-    backgroundColor: palette.coral,
+    backgroundColor: palette.teal,
   },
   controlButtonDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   controlButtonText: {
     color: palette.white,
     fontFamily: fontFamily.display,
     fontSize: 24,
     fontWeight: '700',
-    lineHeight: 28,
   },
   controlButtonTextCompact: {
     fontSize: 20,
-    lineHeight: 24,
   },
   controlValue: {
     color: palette.white,
