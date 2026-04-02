@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette } from '../styles/theme';
 import type {
@@ -43,6 +43,10 @@ export function DigitalTimeInput({
   timeFormat = '12-hour',
 }: DigitalTimeInputProps) {
   const showMinuteControls = practiceInterval !== 'hours-only';
+  const webNoSelectStyle =
+    Platform.OS === 'web'
+      ? ({ touchAction: 'manipulation', userSelect: 'none' } as const as any)
+      : null;
   const latestValueRef = useRef(value);
 
   useEffect(() => {
@@ -88,7 +92,13 @@ export function DigitalTimeInput({
   );
 
   return (
-    <View style={[styles.container, compact && styles.containerCompact]}>
+    <View
+      style={[
+        styles.container,
+        compact && styles.containerCompact,
+        webNoSelectStyle,
+      ]}
+    >
       <View style={[styles.controlsRow, compact && styles.controlsRowCompact]}>
         <ControlCard
           label="Hour"
@@ -105,7 +115,16 @@ export function DigitalTimeInput({
           incrementTestID="hour-increment-button"
           valueTestID="hour-value"
         />
-        <Text style={[styles.separator, compact && styles.separatorCompact]}>:</Text>
+        <Text
+          selectable={false}
+          style={[
+            styles.separator,
+            compact && styles.separatorCompact,
+            webNoSelectStyle,
+          ]}
+        >
+          :
+        </Text>
         <ControlCard
           label="Minute"
           value={String(value.minute).padStart(2, '0')}
@@ -118,7 +137,10 @@ export function DigitalTimeInput({
           valueTestID="minute-value"
         />
       </View>
-      <Text style={[styles.tipText, compact && styles.tipTextCompact]}>
+      <Text
+        selectable={false}
+        style={[styles.tipText, compact && styles.tipTextCompact, webNoSelectStyle]}
+      >
         Tip: press and hold + or - to adjust faster.
       </Text>
     </View>
@@ -136,6 +158,10 @@ function ControlCard({
   disabled = false,
   compact = false,
 }: ControlCardProps) {
+  const webNoSelectStyle =
+    Platform.OS === 'web'
+      ? ({ touchAction: 'manipulation', userSelect: 'none' } as const as any)
+      : null;
   const holdDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
@@ -165,7 +191,7 @@ function ControlCard({
 
         const elapsed = Date.now() - startedAt;
         const nextDelay =
-          elapsed >= 1200 ? 42 : elapsed >= 550 ? 90 : 140;
+          elapsed >= 1200 ? 55 : elapsed >= 550 ? 90 : 140;
 
         repeatTimeoutRef.current = setTimeout(tick, nextDelay);
       };
@@ -204,7 +230,14 @@ function ControlCard({
         compact && styles.controlGroupCompact,
       ]}
     >
-      <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
+      <Text
+        selectable={false}
+        style={[
+          styles.controlLabel,
+          compact && styles.controlLabelCompact,
+          webNoSelectStyle,
+        ]}
+      >
         {label}
       </Text>
       <View
@@ -212,6 +245,7 @@ function ControlCard({
           styles.controlShell,
           compact && styles.controlShellCompact,
           disabled && styles.controlShellDisabled,
+          webNoSelectStyle,
         ]}
       >
         <Pressable
@@ -224,19 +258,23 @@ function ControlCard({
             styles.controlStepper,
             compact && styles.controlButtonCompact,
             disabled && styles.controlButtonDisabled,
+            webNoSelectStyle,
           ]}
           testID={decrementTestID}
         >
           <Text
+            selectable={false}
             style={[
               styles.controlButtonText,
               compact && styles.controlButtonTextCompact,
+              webNoSelectStyle,
             ]}
           >
             -
           </Text>
         </Pressable>
         <Text
+          selectable={false}
           style={[styles.controlValue, compact && styles.controlValueCompact]}
           numberOfLines={1}
           testID={valueTestID}
@@ -254,13 +292,16 @@ function ControlCard({
             compact && styles.controlButtonCompact,
             styles.controlStepperAccent,
             disabled && styles.controlButtonDisabled,
+            webNoSelectStyle,
           ]}
           testID={incrementTestID}
         >
           <Text
+            selectable={false}
             style={[
               styles.controlButtonText,
               compact && styles.controlButtonTextCompact,
+              webNoSelectStyle,
             ]}
           >
             +

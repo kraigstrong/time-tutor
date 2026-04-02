@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette } from '../styles/theme';
 import type { ElapsedDurationValue, PracticeInterval } from '../types/time';
@@ -36,6 +36,10 @@ export function ElapsedDurationInput({
   compact = false,
 }: Props) {
   const showMinuteControls = practiceInterval !== 'hours-only';
+  const webNoSelectStyle =
+    Platform.OS === 'web'
+      ? ({ touchAction: 'manipulation', userSelect: 'none' } as const as any)
+      : null;
   const latestValueRef = useRef(value);
 
   useEffect(() => {
@@ -81,7 +85,13 @@ export function ElapsedDurationInput({
   );
 
   return (
-    <View style={[styles.container, compact && styles.containerCompact]}>
+    <View
+      style={[
+        styles.container,
+        compact && styles.containerCompact,
+        webNoSelectStyle,
+      ]}
+    >
       <View style={[styles.controlsRow, compact && styles.controlsRowCompact]}>
         <Control
           compact={compact}
@@ -94,7 +104,16 @@ export function ElapsedDurationInput({
           value={String(value.hours)}
           valueTestID="elapsed-hours-value"
         />
-        <Text style={[styles.separator, compact && styles.separatorCompact]}>:</Text>
+        <Text
+          selectable={false}
+          style={[
+            styles.separator,
+            compact && styles.separatorCompact,
+            webNoSelectStyle,
+          ]}
+        >
+          :
+        </Text>
         <Control
           compact={compact}
           decrementTestID="elapsed-minutes-decrement-button"
@@ -107,7 +126,10 @@ export function ElapsedDurationInput({
           valueTestID="elapsed-minutes-value"
         />
       </View>
-      <Text style={[styles.tipText, compact && styles.tipTextCompact]}>
+      <Text
+        selectable={false}
+        style={[styles.tipText, compact && styles.tipTextCompact, webNoSelectStyle]}
+      >
         Tip: press and hold + or - to adjust faster.
       </Text>
     </View>
@@ -125,6 +147,10 @@ function Control({
   value,
   valueTestID,
 }: ControlProps) {
+  const webNoSelectStyle =
+    Platform.OS === 'web'
+      ? ({ touchAction: 'manipulation', userSelect: 'none' } as const as any)
+      : null;
   const holdDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
@@ -154,7 +180,7 @@ function Control({
 
         const elapsed = Date.now() - startedAt;
         const nextDelay =
-          elapsed >= 1200 ? 42 : elapsed >= 550 ? 90 : 140;
+          elapsed >= 1200 ? 55 : elapsed >= 550 ? 90 : 140;
 
         repeatTimeoutRef.current = setTimeout(tick, nextDelay);
       };
@@ -188,7 +214,14 @@ function Control({
 
   return (
     <View style={[styles.controlGroup, compact && styles.controlGroupCompact]}>
-      <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
+      <Text
+        selectable={false}
+        style={[
+          styles.controlLabel,
+          compact && styles.controlLabelCompact,
+          webNoSelectStyle,
+        ]}
+      >
         {label}
       </Text>
       <View
@@ -196,6 +229,7 @@ function Control({
           styles.controlShell,
           compact && styles.controlShellCompact,
           disabled && styles.controlShellDisabled,
+          webNoSelectStyle,
         ]}
       >
         <Pressable
@@ -208,19 +242,23 @@ function Control({
             styles.controlStepper,
             compact && styles.controlStepperCompact,
             disabled && styles.controlButtonDisabled,
+            webNoSelectStyle,
           ]}
           testID={decrementTestID}
         >
           <Text
+            selectable={false}
             style={[
               styles.controlButtonText,
               compact && styles.controlButtonTextCompact,
+              webNoSelectStyle,
             ]}
           >
             -
           </Text>
         </Pressable>
         <Text
+          selectable={false}
           style={[styles.controlValue, compact && styles.controlValueCompact]}
           numberOfLines={1}
           testID={valueTestID}
@@ -238,13 +276,16 @@ function Control({
             compact && styles.controlStepperCompact,
             styles.controlStepperAccent,
             disabled && styles.controlButtonDisabled,
+            webNoSelectStyle,
           ]}
           testID={incrementTestID}
         >
           <Text
+            selectable={false}
             style={[
               styles.controlButtonText,
               compact && styles.controlButtonTextCompact,
+              webNoSelectStyle,
             ]}
           >
             +
