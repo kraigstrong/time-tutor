@@ -1,5 +1,6 @@
 import {
   type DigitalTimeValue,
+  type ElapsedDurationValue,
   FIFTEEN_MINUTE_STEPS,
   HOUR_ONLY_MINUTE_STEPS,
   HOURS_12,
@@ -112,6 +113,12 @@ export function formatDigitalTimeValue(
   return `${hourLabel}:${String(time.minute).padStart(2, '0')}`;
 }
 
+export function formatElapsedDurationValue(
+  duration: ElapsedDurationValue,
+): string {
+  return `${duration.hours}:${String(duration.minutes).padStart(2, '0')}`;
+}
+
 export function areTimesEqual(
   left: TimeValue,
   right: TimeValue,
@@ -174,7 +181,15 @@ export function getModeTitle(mode: ExerciseMode): string {
 }
 
 export function getHomeModeTitle(mode: HomeMode): string {
-  return mode === 'explore-time' ? 'Explore time' : getModeTitle(mode);
+  if (mode === 'explore-time') {
+    return 'Explore Time';
+  }
+
+  if (mode === 'elapsed-time') {
+    return 'Elapsed Time';
+  }
+
+  return getModeTitle(mode);
 }
 
 export function getModeDescription(mode: ExerciseMode): string {
@@ -197,6 +212,13 @@ export function createInitialDigitalAnswer(
   return {
     hour: timeFormat === '24-hour' ? 0 : 12,
     minute: 0,
+  };
+}
+
+export function createInitialElapsedDuration(): ElapsedDurationValue {
+  return {
+    hours: 0,
+    minutes: 0,
   };
 }
 
@@ -252,6 +274,10 @@ export function cycleDigitalHour(
   const nextHour = cycleHour(hour as Hour12, delta);
 
   return nextHour;
+}
+
+export function cycleElapsedHours(hours: number, delta: number): number {
+  return modulo(hours + delta, 13);
 }
 
 export function cycleMinute(minute: MinuteValue, delta: number): MinuteValue {
@@ -371,8 +397,143 @@ export function getMinuteOptions(interval: PracticeInterval): readonly number[] 
   }
 }
 
+export function getElapsedMinutes(start: TimeValue, end: TimeValue): number {
+  return Math.max(0, toAbsoluteMinutes(end) - toAbsoluteMinutes(start));
+}
+
+export function elapsedMinutesToDuration(
+  elapsedMinutes: number,
+): ElapsedDurationValue {
+  return {
+    hours: Math.floor(elapsedMinutes / 60),
+    minutes: elapsedMinutes % 60,
+  };
+}
+
+export function durationToElapsedMinutes(
+  duration: ElapsedDurationValue,
+): number {
+  return duration.hours * 60 + duration.minutes;
+}
+
+export function isElapsedDurationCorrect(
+  actual: ElapsedDurationValue,
+  start: TimeValue,
+  end: TimeValue,
+): boolean {
+  return durationToElapsedMinutes(actual) === getElapsedMinutes(start, end);
+}
+
+export function randomElapsedTimePairForInterval(
+  interval: PracticeInterval,
+  random = Math.random,
+): readonly [TimeValue, TimeValue] {
+  const stepSize = getDurationStep(interval);
+  const minimumDuration = stepSize;
+  const maximumDuration = 6 * 60;
+  let attempts = 0;
+
+  while (attempts < 100) {
+    const start = randomTimeValueForInterval(interval, random);
+    const startMinutes = toAbsoluteMinutes(start);
+    const maxDurationForStart = Math.min(
+      maximumDuration,
+      23 * 60 + 59 - startMinutes,
+    );
+    const validDurations = [];
+
+    for (
+      let duration = minimumDuration;
+      duration <= maxDurationForStart;
+      duration += stepSize
+    ) {
+      validDurations.push(duration);
+    }
+
+    if (validDurations.length > 0) {
+      const duration =
+        validDurations[Math.floor(random() * validDurations.length)];
+      const end = absoluteMinutesToTimeValue(startMinutes + duration);
+
+      return [start, end] as const;
+    }
+
+    attempts += 1;
+  }
+
+  const fallbackStart = {
+    hour12: 8 as Hour12,
+    meridiem: 'AM' as Meridiem,
+    minute: 0,
+  };
+
+  return [
+    fallbackStart,
+    absoluteMinutesToTimeValue(toAbsoluteMinutes(fallbackStart) + minimumDuration),
+  ] as const;
+}
+
+export function nextElapsedTimePairForInterval(
+  previous: readonly [TimeValue, TimeValue],
+  interval: PracticeInterval,
+  random = Math.random,
+): readonly [TimeValue, TimeValue] {
+  let candidate = randomElapsedTimePairForInterval(interval, random);
+  let attempts = 0;
+
+  while (attempts < 40 && areTimePairsEqual(candidate, previous)) {
+    candidate = randomElapsedTimePairForInterval(interval, random);
+    attempts += 1;
+  }
+
+  if (!areTimePairsEqual(candidate, previous)) {
+    return candidate;
+  }
+
+  const fallbackStart = nextTimeValueForInterval(previous[0], interval, random);
+  const fallbackDurationMinutes = Math.max(
+    getDurationStep(interval),
+    getElapsedMinutes(previous[0], previous[1]),
+  );
+
+  return [
+    fallbackStart,
+    absoluteMinutesToTimeValue(
+      toAbsoluteMinutes(fallbackStart) + fallbackDurationMinutes,
+    ),
+  ] as const;
+}
+
 function normalizeAngle(angle: number): number {
   return ((angle % FULL_CIRCLE_DEGREES) + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES;
+}
+
+function areTimePairsEqual(
+  left: readonly [TimeValue, TimeValue],
+  right: readonly [TimeValue, TimeValue],
+): boolean {
+  return (
+    areTimesEqual(left[0], right[0]) &&
+    areTimesEqual(left[1], right[1])
+  );
+}
+
+function toAbsoluteMinutes(time: TimeValue): number {
+  return to24Hour(time) * 60 + time.minute;
+}
+
+function absoluteMinutesToTimeValue(totalMinutes: number): TimeValue {
+  const normalizedTotalMinutes = modulo(totalMinutes, 24 * 60);
+  const hour24 = Math.floor(normalizedTotalMinutes / 60);
+  const minute = normalizedTotalMinutes % 60;
+  const meridiem: Meridiem = hour24 >= 12 ? 'PM' : 'AM';
+  const normalizedHour = hour24 % 12;
+
+  return {
+    hour12: (normalizedHour === 0 ? 12 : normalizedHour) as Hour12,
+    meridiem,
+    minute,
+  };
 }
 
 function modulo(value: number, divisor: number): number {
@@ -407,6 +568,20 @@ function getCircularMinuteDistance(
   const backwardDistance = modulo(leftTotalMinutes - rightTotalMinutes, 24 * 60);
 
   return Math.min(forwardDistance, backwardDistance);
+}
+
+function getDurationStep(interval: PracticeInterval): number {
+  switch (interval) {
+    case 'hours-only':
+      return 60;
+    case '15-minute':
+      return 15;
+    case '5-minute':
+      return 5;
+    case '1-minute':
+    default:
+      return 1;
+  }
 }
 
 const ONE_MINUTE_VALUES = Array.from({ length: 60 }, (_, minute) => minute);

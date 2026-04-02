@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ChallengeScreen } from '../screens/ChallengeScreen';
+import { ElapsedTimeScreen } from '../screens/ElapsedTimeScreen';
 import { ExploreTimeScreen } from '../screens/ExploreTimeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ModeChooserScreen } from '../screens/ModeChooserScreen';
@@ -27,6 +28,9 @@ type ActiveRoute =
       name: 'Explore';
     }
   | {
+      name: 'Elapsed';
+    }
+  | {
       mode: ExerciseMode;
       name: 'ModeChooser';
     }
@@ -43,6 +47,7 @@ export function AppNavigator() {
   const [timeFormat, setTimeFormat] = useState<TimeFormat>('12-hour');
   const challengeAvailability = getFeatureAvailability('challenge-mode');
   const timeFormat24Availability = getFeatureAvailability('time-format-24-hour');
+  const elapsedTimeAvailability = getFeatureAvailability('elapsed-time');
   const [route, setRoute] = useState<ActiveRoute>(() =>
     isWeb ? getRouteFromBrowser() : { name: 'Home' },
   );
@@ -176,12 +181,31 @@ export function AppNavigator() {
     );
   }
 
+  if (route.name === 'Elapsed') {
+    return (
+      <ElapsedTimeScreen
+        onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
+        practiceInterval={practiceInterval}
+        timeFormat={timeFormat}
+      />
+    );
+  }
+
   return (
     <HomeScreen
       onOpenSettings={() => navigate({ name: 'Settings' })}
       onSelectMode={(mode: HomeMode) => {
         if (mode === 'explore-time') {
           navigate({ name: 'Explore' });
+          return;
+        }
+
+        if (mode === 'elapsed-time') {
+          if (!elapsedTimeAvailability.enabled) {
+            return;
+          }
+
+          navigate({ name: 'Elapsed' });
           return;
         }
 
@@ -197,6 +221,7 @@ function getRouteFromBrowser(): ActiveRoute {
   const mode = params.get('mode');
   const session = params.get('session');
   const challengeAvailability = getFeatureAvailability('challenge-mode', 'web');
+  const elapsedTimeAvailability = getFeatureAvailability('elapsed-time', 'web');
 
   if (page === 'settings') {
     return {
@@ -207,6 +232,12 @@ function getRouteFromBrowser(): ActiveRoute {
   if (page === 'explore') {
     return {
       name: 'Explore',
+    };
+  }
+
+  if (page === 'elapsed' && elapsedTimeAvailability.enabled) {
+    return {
+      name: 'Elapsed',
     };
   }
 
@@ -260,6 +291,10 @@ function getUrlForRoute(route: ActiveRoute): string {
     url.searchParams.set('page', 'explore');
   }
 
+  if (route.name === 'Elapsed') {
+    url.searchParams.set('page', 'elapsed');
+  }
+
   return `${url.pathname}${url.search}`;
 }
 
@@ -283,6 +318,10 @@ function serializeRoute(route: ActiveRoute) {
       ? {
           name: route.name,
         }
+      : route.name === 'Elapsed'
+        ? {
+            name: route.name,
+          }
       : {
         name: route.name,
       };

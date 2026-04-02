@@ -1,4 +1,7 @@
-export type FeatureId = 'challenge-mode' | 'time-format-24-hour';
+export type FeatureId =
+  | 'challenge-mode'
+  | 'time-format-24-hour'
+  | 'elapsed-time';
 
 export type FeatureAvailability = {
   enabled: boolean;

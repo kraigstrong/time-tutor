@@ -42,6 +42,12 @@ const modeCards: Array<{
     mode: 'explore-time',
     title: 'Explore Time',
   },
+  {
+    accentColor: palette.success,
+    description: 'See two times and figure out how much time passes between them.',
+    mode: 'elapsed-time',
+    title: 'Elapsed Time',
+  },
 ];
 
 export function HomeScreen({ onOpenSettings, onSelectMode }: Props) {

@@ -6,6 +6,7 @@ import type { FeatureAvailability, FeatureId } from '../types/features';
 const WEB_PRELAUNCH_ENTITLEMENTS: Partial<Record<FeatureId, true>> = {
   'challenge-mode': true,
   'time-format-24-hour': true,
+  'elapsed-time': true,
 };
 
 export function getFeatureAvailability(
@@ -34,6 +35,17 @@ export function getFeatureAvailability(
         : {
             enabled: true,
             label: '24-hour',
+          };
+    case 'elapsed-time':
+      return platform === 'web' && !WEB_PRELAUNCH_ENTITLEMENTS[featureId]
+        ? {
+            enabled: false,
+            label: 'Elapsed Time',
+            reason: 'Available in the paid mobile app',
+          }
+        : {
+            enabled: true,
+            label: 'Elapsed Time',
           };
     default:
       return {

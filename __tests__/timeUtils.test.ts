@@ -4,17 +4,24 @@ import {
   cycleMinute,
   cycleDigitalHour,
   cycleMinuteForInterval,
+  durationToElapsedMinutes,
   createInitialDigitalAnswer,
   deriveHourFromAngle,
+  elapsedMinutesToDuration,
+  formatElapsedDurationValue,
   formatDigitalTimeValue,
   formatTimeValue,
+  getElapsedMinutes,
   getClockHandAngles,
   getMinuteOptions,
   isDigitalAnswerCorrect,
+  isElapsedDurationCorrect,
   digitalValueToTimeValue,
   nextTimeValue,
+  nextElapsedTimePairForInterval,
   nextTimeValueForInterval,
   normalizeAnalogTimeFor24Hour,
+  randomElapsedTimePairForInterval,
   randomTimeValue,
   randomTimeValueForInterval,
   snapMinuteFromAngle,
@@ -133,6 +140,30 @@ describe('time utilities', () => {
       hour: 0,
       minute: 0,
     });
+  });
+
+  it('formats and validates elapsed durations', () => {
+    expect(
+      getElapsedMinutes(
+        { hour12: 11, meridiem: 'AM', minute: 30 },
+        { hour12: 1, meridiem: 'PM', minute: 0 },
+      ),
+    ).toBe(90);
+
+    expect(elapsedMinutesToDuration(90)).toEqual({
+      hours: 1,
+      minutes: 30,
+    });
+
+    expect(durationToElapsedMinutes({ hours: 1, minutes: 30 })).toBe(90);
+    expect(formatElapsedDurationValue({ hours: 1, minutes: 30 })).toBe('1:30');
+    expect(
+      isElapsedDurationCorrect(
+        { hours: 1, minutes: 30 },
+        { hour12: 11, meridiem: 'AM', minute: 30 },
+        { hour12: 1, meridiem: 'PM', minute: 0 },
+      ),
+    ).toBe(true);
   });
 
   it('converts between internal and digital values for explore mode', () => {
@@ -279,5 +310,29 @@ describe('time utilities', () => {
       meridiem: 'AM',
       minute: 45,
     });
+  });
+
+  it('generates ordered elapsed-time pairs and avoids repeating them', () => {
+    const pair = randomElapsedTimePairForInterval('15-minute', () => 0.25);
+
+    expect(getElapsedMinutes(pair[0], pair[1])).toBeGreaterThan(0);
+    expect(pair[0].minute % 15).toBe(0);
+    expect(pair[1].minute % 15).toBe(0);
+
+    const next = nextElapsedTimePairForInterval(
+      [
+        { hour12: 8, meridiem: 'AM', minute: 0 },
+        { hour12: 9, meridiem: 'AM', minute: 0 },
+      ],
+      'hours-only',
+      () => 0.1,
+    );
+
+    expect(next).not.toEqual([
+      { hour12: 8, meridiem: 'AM', minute: 0 },
+      { hour12: 9, meridiem: 'AM', minute: 0 },
+    ]);
+    expect(next[0].minute).toBe(0);
+    expect(next[1].minute).toBe(0);
   });
 });

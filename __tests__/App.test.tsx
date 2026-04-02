@@ -26,7 +26,8 @@ describe('HomeScreen', () => {
     expect(getByText('Choose a mode')).toBeTruthy();
     expect(getByText('Set the Clock')).toBeTruthy();
     expect(getByText('Read the Clock')).toBeTruthy();
-    expect(getByText('Explore time')).toBeTruthy();
+    expect(getByText('Explore Time')).toBeTruthy();
+    expect(getByText('Elapsed Time')).toBeTruthy();
 
     fireEvent.press(getByTestId('digital-to-analog-card'));
 
@@ -39,5 +40,9 @@ describe('HomeScreen', () => {
     fireEvent.press(getByTestId('explore-time-card'));
 
     expect(onSelectMode).toHaveBeenCalledWith('explore-time');
+
+    fireEvent.press(getByTestId('elapsed-time-card'));
+
+    expect(onSelectMode).toHaveBeenCalledWith('elapsed-time');
   });
 });

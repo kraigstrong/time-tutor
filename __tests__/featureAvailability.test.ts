@@ -21,5 +21,15 @@ describe('feature availability', () => {
       enabled: true,
       label: '24-hour',
     });
+
+    expect(getFeatureAvailability('elapsed-time', 'ios')).toEqual({
+      enabled: true,
+      label: 'Elapsed Time',
+    });
+
+    expect(getFeatureAvailability('elapsed-time', 'web')).toEqual({
+      enabled: true,
+      label: 'Elapsed Time',
+    });
   });
 });
