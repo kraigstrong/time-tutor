@@ -66,6 +66,7 @@ describe('SettingsScreen', () => {
     expect(screen.getByText('24-hour')).toBeTruthy();
     expect(screen.getByText('Support')).toBeTruthy();
     expect(screen.getByText('Privacy Policy')).toBeTruthy();
+    expect(screen.getByText('Version 0.9.0')).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('interval-hours-only'));
     fireEvent.press(screen.getByTestId('settings-back-button'));

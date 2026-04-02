@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { APP_VERSION } from '../config/appInfo';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { FeatureAvailability } from '../types/features';
 import type { PracticeInterval, TimeFormat } from '../types/time';
@@ -306,6 +307,10 @@ export function SettingsScreen({
             </View>
           </View>
         </View>
+
+        <View style={[styles.content, styles.versionSection, { maxWidth: contentWidth }]}>
+          <Text style={styles.versionText}>Version {APP_VERSION}</Text>
+        </View>
       </ScrollView>
 
       <Modal
@@ -411,6 +416,10 @@ const styles = StyleSheet.create({
   contentSectionSpacing: {
     marginTop: 12,
   },
+  versionSection: {
+    alignItems: 'center',
+    marginTop: 18,
+  },
   headerShell: {
     alignSelf: 'center',
     marginBottom: 18,
@@ -456,6 +465,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginTop: -4,
+    textAlign: 'center',
+  },
+  versionText: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.3,
     textAlign: 'center',
   },
   card: {
