@@ -49,6 +49,9 @@ export function AppNavigator() {
   const [route, setRoute] = useState<ActiveRoute>(() =>
     isWeb ? getRouteFromBrowser() : { name: 'Home' },
   );
+  const [settingsReturnRoute, setSettingsReturnRoute] = useState<ActiveRoute>({
+    name: 'Home',
+  });
 
   const navigate = useCallback(
     (nextRoute: ActiveRoute, historyMode: 'push' | 'replace' = 'push') => {
@@ -106,6 +109,13 @@ export function AppNavigator() {
     () => (isWeb ? 'replace' : 'push'),
     [isWeb],
   );
+  const openSettings = useCallback(
+    (fromRoute: ActiveRoute) => {
+      setSettingsReturnRoute(fromRoute);
+      navigate({ name: 'Settings' });
+    },
+    [navigate],
+  );
 
   if (route.name === 'Session') {
     if (route.mode === 'elapsed-time') {
@@ -115,7 +125,7 @@ export function AppNavigator() {
           onBack={() =>
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
-          onOpenSettings={() => navigate({ name: 'Settings' })}
+          onOpenSettings={() => openSettings(route)}
           practiceInterval={practiceInterval}
           timeFormat={timeFormat}
         />
@@ -127,7 +137,7 @@ export function AppNavigator() {
           onBack={() =>
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
-          onOpenSettings={() => navigate({ name: 'Settings' })}
+          onOpenSettings={() => openSettings(route)}
           practiceInterval={practiceInterval}
           timeFormat={timeFormat}
         />
@@ -141,7 +151,7 @@ export function AppNavigator() {
           onBack={() =>
             navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
           }
-          onOpenSettings={() => navigate({ name: 'Settings' })}
+          onOpenSettings={() => openSettings(route)}
           practiceInterval={practiceInterval}
           timeFormat={timeFormat}
         />
@@ -154,7 +164,7 @@ export function AppNavigator() {
         onBack={() =>
           navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
         }
-        onOpenSettings={() => navigate({ name: 'Settings' })}
+        onOpenSettings={() => openSettings(route)}
         practiceInterval={practiceInterval}
         timeFormat={timeFormat}
       />
@@ -167,7 +177,7 @@ export function AppNavigator() {
         challengeAvailability={challengeAvailability}
         mode={route.mode}
         onBack={() => navigate({ name: 'Home' }, chooserBackMode)}
-        onOpenSettings={() => navigate({ name: 'Settings' })}
+        onOpenSettings={() => openSettings(route)}
         onSelectSession={sessionType => {
           if (sessionType === 'challenge' && !challengeAvailability.enabled) {
             return;
@@ -183,7 +193,7 @@ export function AppNavigator() {
     return (
       <SettingsScreen
         interval={practiceInterval}
-        onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
+        onBack={() => navigate(settingsReturnRoute, settingsBackMode)}
         onSelectInterval={setPracticeInterval}
         onSelectTimeFormat={nextFormat => {
           if (nextFormat === '24-hour' && !timeFormat24Availability.enabled) {
@@ -202,7 +212,7 @@ export function AppNavigator() {
     return (
       <ExploreTimeScreen
         onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
-        onOpenSettings={() => navigate({ name: 'Settings' })}
+        onOpenSettings={() => openSettings(route)}
         practiceInterval={practiceInterval}
         timeFormat={timeFormat}
       />
@@ -211,7 +221,7 @@ export function AppNavigator() {
 
   return (
     <HomeScreen
-      onOpenSettings={() => navigate({ name: 'Settings' })}
+      onOpenSettings={() => openSettings({ name: 'Home' })}
       onSelectMode={(mode: HomeMode) => {
         if (mode === 'explore-time') {
           navigate({ name: 'Explore' });

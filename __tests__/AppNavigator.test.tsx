@@ -26,4 +26,21 @@ describe('AppNavigator', () => {
     expect(screen.getByText('Practice')).toBeTruthy();
     expect(screen.getByText('1-Minute Challenge')).toBeTruthy();
   });
+
+  it('returns from settings to the screen it was opened from', () => {
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <AppNavigator />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('digital-to-analog-card'));
+    expect(screen.getByText('Choose how you want to play.')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('mode-chooser-open-settings-button'));
+    expect(screen.getByText('Settings')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('settings-back-button'));
+    expect(screen.getByText('Choose how you want to play.')).toBeTruthy();
+  });
 });
