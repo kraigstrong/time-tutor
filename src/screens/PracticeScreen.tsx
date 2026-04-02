@@ -289,7 +289,7 @@ export function PracticeScreen({
 
   const wrongAnswerOverlay =
     showWrongAnswerOverlay && result ? (
-      <View pointerEvents="box-none" style={styles.feedbackOverlay}>
+      <View style={styles.feedbackOverlay}>
         <View
           style={styles.feedbackToast}
           testID="practice-wrong-answer-overlay"
