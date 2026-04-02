@@ -298,7 +298,7 @@ export function ElapsedTimeScreen({
               <Text style={styles.backButtonText}>Back</Text>
             </Pressable>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>Elapsed Time</Text>
+              <Text style={styles.title}>Practice Mode</Text>
               <Text style={styles.subtitle}>
                 Figure out how much time passes between the two clocks.
               </Text>

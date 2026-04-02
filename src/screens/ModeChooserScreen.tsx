@@ -11,12 +11,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { FeatureAvailability } from '../types/features';
-import type { ExerciseMode, SessionType } from '../types/time';
-import { getModeTitle } from '../utils/time';
+import type { PlayableMode, SessionType } from '../types/time';
+import { getHomeModeTitle } from '../utils/time';
 
 type Props = {
   challengeAvailability: FeatureAvailability;
-  mode: ExerciseMode;
+  mode: PlayableMode;
   onBack: () => void;
   onSelectSession: (sessionType: SessionType) => void;
 };
@@ -56,7 +56,7 @@ export function ModeChooserScreen({
             <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
           <View style={styles.headerCopy}>
-            <Text style={styles.title}>{getModeTitle(mode)}</Text>
+            <Text style={styles.title}>{getHomeModeTitle(mode)}</Text>
             <Text style={styles.subtitle}>Choose how you want to play.</Text>
           </View>
         </View>

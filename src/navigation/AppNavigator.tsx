@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ChallengeScreen } from '../screens/ChallengeScreen';
+import { ElapsedTimeChallengeScreen } from '../screens/ElapsedTimeChallengeScreen';
 import { ElapsedTimeScreen } from '../screens/ElapsedTimeScreen';
 import { ExploreTimeScreen } from '../screens/ExploreTimeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -9,8 +10,8 @@ import { ModeChooserScreen } from '../screens/ModeChooserScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import type {
-  ExerciseMode,
   HomeMode,
+  PlayableMode,
   PracticeInterval,
   SessionType,
   TimeFormat,
@@ -28,14 +29,11 @@ type ActiveRoute =
       name: 'Explore';
     }
   | {
-      name: 'Elapsed';
-    }
-  | {
-      mode: ExerciseMode;
+      mode: PlayableMode;
       name: 'ModeChooser';
     }
   | {
-      mode: ExerciseMode;
+      mode: PlayableMode;
       name: 'Session';
       sessionType: SessionType;
     };
@@ -110,6 +108,30 @@ export function AppNavigator() {
   );
 
   if (route.name === 'Session') {
+    if (route.mode === 'elapsed-time') {
+      if (route.sessionType === 'challenge') {
+        return (
+          <ElapsedTimeChallengeScreen
+            onBack={() =>
+              navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
+            }
+            practiceInterval={practiceInterval}
+            timeFormat={timeFormat}
+          />
+        );
+      }
+
+      return (
+        <ElapsedTimeScreen
+          onBack={() =>
+            navigate({ mode: route.mode, name: 'ModeChooser' }, practiceBackMode)
+          }
+          practiceInterval={practiceInterval}
+          timeFormat={timeFormat}
+        />
+      );
+    }
+
     if (route.sessionType === 'challenge') {
       return (
         <ChallengeScreen
@@ -181,16 +203,6 @@ export function AppNavigator() {
     );
   }
 
-  if (route.name === 'Elapsed') {
-    return (
-      <ElapsedTimeScreen
-        onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
-        practiceInterval={practiceInterval}
-        timeFormat={timeFormat}
-      />
-    );
-  }
-
   return (
     <HomeScreen
       onOpenSettings={() => navigate({ name: 'Settings' })}
@@ -205,7 +217,7 @@ export function AppNavigator() {
             return;
           }
 
-          navigate({ name: 'Elapsed' });
+          navigate({ mode, name: 'ModeChooser' });
           return;
         }
 
@@ -235,13 +247,11 @@ function getRouteFromBrowser(): ActiveRoute {
     };
   }
 
-  if (page === 'elapsed' && elapsedTimeAvailability.enabled) {
-    return {
-      name: 'Elapsed',
-    };
-  }
-
-  if (mode === 'digital-to-analog' || mode === 'analog-to-digital') {
+  if (
+    mode === 'digital-to-analog' ||
+    mode === 'analog-to-digital' ||
+    (mode === 'elapsed-time' && elapsedTimeAvailability.enabled)
+  ) {
     if (session === 'challenge' && challengeAvailability.enabled) {
       return {
         mode,
@@ -291,10 +301,6 @@ function getUrlForRoute(route: ActiveRoute): string {
     url.searchParams.set('page', 'explore');
   }
 
-  if (route.name === 'Elapsed') {
-    url.searchParams.set('page', 'elapsed');
-  }
-
   return `${url.pathname}${url.search}`;
 }
 
@@ -318,10 +324,6 @@ function serializeRoute(route: ActiveRoute) {
       ? {
           name: route.name,
         }
-      : route.name === 'Elapsed'
-        ? {
-            name: route.name,
-          }
       : {
         name: route.name,
       };

@@ -38,4 +38,28 @@ describe('ModeChooserScreen', () => {
     expect(onSelectSession).toHaveBeenCalledTimes(2);
     expect(screen.queryByTestId('challenge-unavailable-tooltip')).toBeNull();
   });
+
+  it('renders the elapsed time title for that mode', () => {
+    const screen = render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 852, width: 393, x: 0, y: 0 },
+          insets: { bottom: 34, left: 0, right: 0, top: 59 },
+        }}
+      >
+        <ModeChooserScreen
+          challengeAvailability={{
+            enabled: true,
+            label: '1-Minute Challenge',
+          }}
+          mode="elapsed-time"
+          onBack={jest.fn()}
+          onSelectSession={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByText('Elapsed Time')).toBeTruthy();
+    expect(screen.getByText('Practice')).toBeTruthy();
+  });
 });
