@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ChallengeScreen } from '../screens/ChallengeScreen';
+import { ExploreTimeScreen } from '../screens/ExploreTimeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ModeChooserScreen } from '../screens/ModeChooserScreen';
 import { PracticeScreen } from '../screens/PracticeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import type {
   ExerciseMode,
+  HomeMode,
   PracticeInterval,
   SessionType,
   TimeFormat,
@@ -20,6 +22,9 @@ type ActiveRoute =
     }
   | {
       name: 'Settings';
+    }
+  | {
+      name: 'Explore';
     }
   | {
       mode: ExerciseMode;
@@ -161,10 +166,27 @@ export function AppNavigator() {
     );
   }
 
+  if (route.name === 'Explore') {
+    return (
+      <ExploreTimeScreen
+        onBack={() => navigate({ name: 'Home' }, settingsBackMode)}
+        practiceInterval={practiceInterval}
+        timeFormat={timeFormat}
+      />
+    );
+  }
+
   return (
     <HomeScreen
       onOpenSettings={() => navigate({ name: 'Settings' })}
-      onSelectMode={mode => navigate({ mode, name: 'ModeChooser' })}
+      onSelectMode={(mode: HomeMode) => {
+        if (mode === 'explore-time') {
+          navigate({ name: 'Explore' });
+          return;
+        }
+
+        navigate({ mode, name: 'ModeChooser' });
+      }}
     />
   );
 }
@@ -179,6 +201,12 @@ function getRouteFromBrowser(): ActiveRoute {
   if (page === 'settings') {
     return {
       name: 'Settings',
+    };
+  }
+
+  if (page === 'explore') {
+    return {
+      name: 'Explore',
     };
   }
 
@@ -228,6 +256,10 @@ function getUrlForRoute(route: ActiveRoute): string {
     url.searchParams.set('page', 'settings');
   }
 
+  if (route.name === 'Explore') {
+    url.searchParams.set('page', 'explore');
+  }
+
   return `${url.pathname}${url.search}`;
 }
 
@@ -244,6 +276,10 @@ function serializeRoute(route: ActiveRoute) {
           name: route.name,
         }
     : route.name === 'Settings'
+      ? {
+          name: route.name,
+        }
+    : route.name === 'Explore'
       ? {
           name: route.name,
         }

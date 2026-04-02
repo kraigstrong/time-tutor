@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { fontFamily, palette, shadows } from '../styles/theme';
+import { fontFamily, palette } from '../styles/theme';
 import type {
   DigitalTimeValue,
   PracticeInterval,
@@ -29,6 +29,7 @@ type ControlCardProps = {
   onDecrement: () => void;
   decrementTestID: string;
   incrementTestID: string;
+  valueTestID: string;
   disabled?: boolean;
   compact?: boolean;
 };
@@ -36,7 +37,6 @@ type ControlCardProps = {
 export function DigitalTimeInput({
   value,
   onChange,
-  showMeridiem = false,
   practiceInterval = '5-minute',
   disabled = false,
   compact = false,
@@ -46,7 +46,6 @@ export function DigitalTimeInput({
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
-      <Text style={[styles.title, compact && styles.titleCompact]}>Enter the time</Text>
       <View style={[styles.controlsRow, compact && styles.controlsRowCompact]}>
         <ControlCard
           label="Hour"
@@ -71,7 +70,9 @@ export function DigitalTimeInput({
           }
           decrementTestID="hour-decrement-button"
           incrementTestID="hour-increment-button"
+          valueTestID="hour-value"
         />
+        <Text style={[styles.separator, compact && styles.separatorCompact]}>:</Text>
         <ControlCard
           label="Minute"
           value={String(value.minute).padStart(2, '0')}
@@ -91,9 +92,9 @@ export function DigitalTimeInput({
           }
           decrementTestID="minute-decrement-button"
           incrementTestID="minute-increment-button"
+          valueTestID="minute-value"
         />
       </View>
-      {showMeridiem ? null : null}
     </View>
   );
 }
@@ -105,33 +106,33 @@ function ControlCard({
   onDecrement,
   decrementTestID,
   incrementTestID,
+  valueTestID,
   disabled = false,
   compact = false,
 }: ControlCardProps) {
   return (
     <View
       style={[
-        styles.controlCard,
-        compact && styles.controlCardCompact,
-        disabled && styles.controlCardDisabled,
+        styles.controlGroup,
+        compact && styles.controlGroupCompact,
       ]}
     >
       <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
         {label}
       </Text>
-      <Text
-        style={[styles.controlValue, compact && styles.controlValueCompact]}
-        numberOfLines={1}
+      <View
+        style={[
+          styles.controlShell,
+          compact && styles.controlShellCompact,
+          disabled && styles.controlShellDisabled,
+        ]}
       >
-        {value}
-      </Text>
-      <View style={[styles.controlButtons, compact && styles.controlButtonsCompact]}>
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
           onPress={onDecrement}
           style={[
-            styles.controlButton,
+            styles.controlStepper,
             compact && styles.controlButtonCompact,
             disabled && styles.controlButtonDisabled,
           ]}
@@ -146,14 +147,21 @@ function ControlCard({
             -
           </Text>
         </Pressable>
+        <Text
+          style={[styles.controlValue, compact && styles.controlValueCompact]}
+          numberOfLines={1}
+          testID={valueTestID}
+        >
+          {value}
+        </Text>
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
           onPress={onIncrement}
           style={[
-            styles.controlButton,
+            styles.controlStepper,
             compact && styles.controlButtonCompact,
-            styles.controlButtonAccent,
+            styles.controlStepperAccent,
             disabled && styles.controlButtonDisabled,
           ]}
           testID={incrementTestID}
@@ -174,51 +182,58 @@ function ControlCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: palette.surface,
-    borderRadius: 28,
-    padding: 20,
-    gap: 18,
-    ...shadows.card,
+    alignItems: 'center',
+    gap: 12,
   },
   containerCompact: {
-    borderRadius: 24,
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  title: {
-    color: palette.ink,
-    fontFamily: fontFamily.display,
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  titleCompact: {
-    fontSize: 18,
+    gap: 10,
   },
   controlsRow: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 12,
+    justifyContent: 'center',
   },
   controlsRowCompact: {
     gap: 10,
   },
-  controlCard: {
-    flex: 1,
+  separator: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 40,
+    fontWeight: '700',
+    lineHeight: 64,
+    paddingTop: 24,
+  },
+  separatorCompact: {
+    fontSize: 34,
+    lineHeight: 54,
+    paddingTop: 20,
+  },
+  controlGroup: {
     alignItems: 'center',
-    backgroundColor: palette.surfaceMuted,
-    borderRadius: 22,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    gap: 10,
+    gap: 8,
   },
-  controlCardCompact: {
-    borderRadius: 18,
+  controlGroupCompact: {
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
   },
-  controlCardDisabled: {
+  controlShell: {
+    alignItems: 'center',
+    backgroundColor: palette.ink,
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 64,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  controlShellCompact: {
+    gap: 6,
+    minHeight: 54,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  controlShellDisabled: {
     opacity: 0.8,
   },
   controlLabel: {
@@ -233,25 +248,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   controlValue: {
-    color: palette.ink,
+    color: palette.white,
     fontFamily: fontFamily.display,
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+    minWidth: 52,
+    textAlign: 'center',
   },
   controlValueCompact: {
     fontSize: 30,
+    minWidth: 44,
   },
-  controlButtons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  controlButtonsCompact: {
-    gap: 8,
-  },
-  controlButton: {
+  controlStepper: {
     alignItems: 'center',
-    backgroundColor: palette.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 999,
     height: 44,
     justifyContent: 'center',
@@ -261,51 +272,19 @@ const styles = StyleSheet.create({
     height: 36,
     width: 36,
   },
-  controlButtonAccent: {
+  controlStepperAccent: {
     backgroundColor: palette.teal,
   },
   controlButtonDisabled: {
     opacity: 0.35,
   },
   controlButtonText: {
-    color: palette.ink,
+    color: palette.white,
     fontFamily: fontFamily.display,
     fontSize: 24,
     fontWeight: '700',
   },
   controlButtonTextCompact: {
     fontSize: 20,
-  },
-  meridiemRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  meridiemRowCompact: {
-    gap: 10,
-  },
-  meridiemChip: {
-    alignItems: 'center',
-    backgroundColor: palette.surfaceMuted,
-    borderRadius: 999,
-    flex: 1,
-    paddingVertical: 14,
-  },
-  meridiemChipCompact: {
-    paddingVertical: 10,
-  },
-  meridiemChipSelected: {
-    backgroundColor: palette.coral,
-  },
-  meridiemChipText: {
-    color: palette.ink,
-    fontFamily: fontFamily.body,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  meridiemChipTextCompact: {
-    fontSize: 15,
-  },
-  meridiemChipTextSelected: {
-    color: palette.white,
   },
 });

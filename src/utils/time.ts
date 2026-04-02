@@ -7,6 +7,7 @@ import {
   MINUTE_STEPS,
   type ExerciseMode,
   type Hour12,
+  type HomeMode,
   type Meridiem,
   type MinuteValue,
   type PracticeInterval,
@@ -172,6 +173,10 @@ export function getModeTitle(mode: ExerciseMode): string {
   return mode === 'digital-to-analog' ? 'Set the Clock' : 'Read the Clock';
 }
 
+export function getHomeModeTitle(mode: HomeMode): string {
+  return mode === 'explore-time' ? 'Explore time' : getModeTitle(mode);
+}
+
 export function getModeDescription(mode: ExerciseMode): string {
   return mode === 'digital-to-analog'
     ? 'Drag the clock hands until the analog clock matches the digital time.'
@@ -192,6 +197,39 @@ export function createInitialDigitalAnswer(
   return {
     hour: timeFormat === '24-hour' ? 0 : 12,
     minute: 0,
+  };
+}
+
+export function timeValueToDigitalValue(
+  time: TimeValue,
+  timeFormat: TimeFormat = '12-hour',
+): DigitalTimeValue {
+  return {
+    hour: timeFormat === '24-hour' ? to24Hour(time) : time.hour12,
+    minute: time.minute,
+  };
+}
+
+export function digitalValueToTimeValue(
+  value: DigitalTimeValue,
+  timeFormat: TimeFormat = '12-hour',
+  currentMeridiem: Meridiem = 'AM',
+): TimeValue {
+  if (timeFormat === '24-hour') {
+    const meridiem: Meridiem = value.hour >= 12 ? 'PM' : 'AM';
+    const normalizedHour = value.hour % 12;
+
+    return {
+      hour12: (normalizedHour === 0 ? 12 : normalizedHour) as Hour12,
+      meridiem,
+      minute: value.minute,
+    };
+  }
+
+  return {
+    hour12: value.hour as Hour12,
+    meridiem: currentMeridiem,
+    minute: value.minute,
   };
 }
 
@@ -273,6 +311,22 @@ export function isDigitalAnswerCorrect(
   return actual.hour === expected.hour12 && actual.minute === expected.minute;
 }
 
+export function normalizeAnalogTimeFor24Hour(
+  current: TimeValue,
+  next: TimeValue,
+): TimeValue {
+  const currentDigital = timeValueToDigitalValue(current, '24-hour');
+  const candidates = to24HourVariants(next);
+  const bestMatch = candidates.reduce((closest, candidate) => {
+    const closestDistance = getCircularMinuteDistance(currentDigital, closest);
+    const candidateDistance = getCircularMinuteDistance(currentDigital, candidate);
+
+    return candidateDistance < closestDistance ? candidate : closest;
+  });
+
+  return digitalValueToTimeValue(bestMatch, '24-hour', current.meridiem);
+}
+
 export function applyMinuteDrag(time: TimeValue, nextMinute: MinuteValue): TimeValue {
   const wrappedForward = time.minute >= 45 && nextMinute <= 15;
   const wrappedBackward = time.minute <= 15 && nextMinute >= 45;
@@ -341,6 +395,18 @@ function getClosestMinuteOptionIndex(
 
     return optionDistance < closestDistance ? index : closestIndex;
   }, 0);
+}
+
+function getCircularMinuteDistance(
+  left: DigitalTimeValue,
+  right: DigitalTimeValue,
+): number {
+  const leftTotalMinutes = left.hour * 60 + left.minute;
+  const rightTotalMinutes = right.hour * 60 + right.minute;
+  const forwardDistance = modulo(rightTotalMinutes - leftTotalMinutes, 24 * 60);
+  const backwardDistance = modulo(leftTotalMinutes - rightTotalMinutes, 24 * 60);
+
+  return Math.min(forwardDistance, backwardDistance);
 }
 
 const ONE_MINUTE_VALUES = Array.from({ length: 60 }, (_, minute) => minute);

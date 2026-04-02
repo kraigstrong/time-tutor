@@ -11,12 +11,15 @@ import {
   getClockHandAngles,
   getMinuteOptions,
   isDigitalAnswerCorrect,
+  digitalValueToTimeValue,
   nextTimeValue,
   nextTimeValueForInterval,
+  normalizeAnalogTimeFor24Hour,
   randomTimeValue,
   randomTimeValueForInterval,
   snapMinuteFromAngle,
   snapMinuteFromAngleForInterval,
+  timeValueToDigitalValue,
   to24HourVariants,
 } from '../src/utils/time';
 
@@ -132,6 +135,42 @@ describe('time utilities', () => {
     });
   });
 
+  it('converts between internal and digital values for explore mode', () => {
+    expect(
+      timeValueToDigitalValue(
+        { hour12: 3, meridiem: 'PM', minute: 15 },
+        '24-hour',
+      ),
+    ).toEqual({
+      hour: 15,
+      minute: 15,
+    });
+
+    expect(
+      digitalValueToTimeValue(
+        { hour: 23, minute: 0 },
+        '24-hour',
+        'AM',
+      ),
+    ).toEqual({
+      hour12: 11,
+      meridiem: 'PM',
+      minute: 0,
+    });
+
+    expect(
+      digitalValueToTimeValue(
+        { hour: 4, minute: 30 },
+        '12-hour',
+        'PM',
+      ),
+    ).toEqual({
+      hour12: 4,
+      meridiem: 'PM',
+      minute: 30,
+    });
+  });
+
   it('accepts both 24-hour equivalents for the same analog clock', () => {
     expect(
       to24HourVariants({ hour12: 11, meridiem: 'PM', minute: 0 }),
@@ -161,6 +200,30 @@ describe('time utilities', () => {
         '24-hour',
       ),
     ).toBe(false);
+  });
+
+  it('keeps analog edits continuous in 24-hour explore mode', () => {
+    expect(
+      normalizeAnalogTimeFor24Hour(
+        { hour12: 12, meridiem: 'PM', minute: 0 },
+        { hour12: 1, meridiem: 'PM', minute: 0 },
+      ),
+    ).toEqual({
+      hour12: 1,
+      meridiem: 'PM',
+      minute: 0,
+    });
+
+    expect(
+      normalizeAnalogTimeFor24Hour(
+        { hour12: 11, meridiem: 'PM', minute: 0 },
+        { hour12: 12, meridiem: 'PM', minute: 0 },
+      ),
+    ).toEqual({
+      hour12: 12,
+      meridiem: 'AM',
+      minute: 0,
+    });
   });
 
   it('picks a new visible time when generating the next prompt', () => {

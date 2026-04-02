@@ -10,7 +10,13 @@ import {
 import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
 
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { Hour12, Meridiem, PracticeInterval, TimeValue } from '../types/time';
+import type {
+  Hour12,
+  Meridiem,
+  PracticeInterval,
+  TimeFormat,
+  TimeValue,
+} from '../types/time';
 import {
   applyMinuteDrag,
   angleFromTouch,
@@ -30,6 +36,8 @@ type AnalogClockProps = {
   showMeridiemToggle?: boolean;
   showInteractionHint?: boolean;
   showTimePreview?: boolean;
+  previewIncludeMeridiem?: boolean;
+  timeFormat?: TimeFormat;
   onMeridiemChange?: (meridiem: Meridiem) => void;
   practiceInterval?: PracticeInterval;
 };
@@ -46,6 +54,8 @@ export function AnalogClock({
   showMeridiemToggle = false,
   showInteractionHint,
   showTimePreview = false,
+  previewIncludeMeridiem = true,
+  timeFormat = '12-hour',
   onMeridiemChange,
   practiceInterval = '5-minute',
 }: AnalogClockProps) {
@@ -239,7 +249,12 @@ export function AnalogClock({
         <Text style={styles.helperText}>Tap a hand and drag it around the clock.</Text>
       ) : null}
       {showTimePreview ? (
-        <Text style={styles.timePreview}>{formatTimeValue(time)}</Text>
+        <Text style={styles.timePreview} testID="analog-clock-time-preview">
+          {formatTimeValue(time, {
+            includeMeridiem: previewIncludeMeridiem,
+            timeFormat,
+          })}
+        </Text>
       ) : null}
       {showMeridiemToggle ? (
         <View style={styles.meridiemRow}>

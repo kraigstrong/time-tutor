@@ -11,17 +11,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SettingsGearIcon } from '../components/SettingsGearIcon';
 import { fontFamily, palette, shadows } from '../styles/theme';
-import type { ExerciseMode } from '../types/time';
+import type { HomeMode } from '../types/time';
 
 type Props = {
   onOpenSettings: () => void;
-  onSelectMode: (mode: ExerciseMode) => void;
+  onSelectMode: (mode: HomeMode) => void;
 };
 
 const modeCards: Array<{
   accentColor: string;
   description: string;
-  mode: ExerciseMode;
+  mode: HomeMode;
   title: string;
 }> = [
   {
@@ -35,6 +35,12 @@ const modeCards: Array<{
     description: 'Read the analog clock and enter the matching digital time.',
     mode: 'analog-to-digital',
     title: 'Read the Clock',
+  },
+  {
+    accentColor: palette.gold,
+    description: 'Move the clock or change the digital time and watch them sync.',
+    mode: 'explore-time',
+    title: 'Explore Time',
   },
 ];
 
