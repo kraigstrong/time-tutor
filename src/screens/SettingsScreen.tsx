@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fontFamily, palette, shadows } from '../styles/theme';
 import type { FeatureAvailability } from '../types/features';
 import type { PracticeInterval, TimeFormat } from '../types/time';
+import { getSiteUrl } from '../utils/siteLinks';
 
 type Props = {
   interval: PracticeInterval;
@@ -79,6 +81,9 @@ export function SettingsScreen({
   const isTablet = width >= 768;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentWidth = Math.min(width - 24, isTablet ? 760 : 560);
+  const openExternalLink = (url: string) => {
+    Linking.openURL(url).catch(() => {});
+  };
 
   return (
     <ScrollView
@@ -236,6 +241,32 @@ export function SettingsScreen({
           </View>
         </View>
       </View>
+
+      <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
+        <View style={styles.card}>
+          <Text style={styles.sectionEyebrow}>Help</Text>
+          <View style={styles.linksColumn}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => openExternalLink(getSiteUrl('/support'))}
+              style={styles.linkRow}
+              testID="settings-support-link"
+            >
+              <Text style={styles.linkLabel}>Support</Text>
+              <Text style={styles.linkArrow}>↗</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => openExternalLink(getSiteUrl('/privacy'))}
+              style={styles.linkRow}
+              testID="settings-privacy-link"
+            >
+              <Text style={styles.linkLabel}>Privacy Policy</Text>
+              <Text style={styles.linkArrow}>↗</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -328,6 +359,30 @@ const styles = StyleSheet.create({
   },
   optionsColumn: {
     gap: 12,
+  },
+  linksColumn: {
+    gap: 10,
+  },
+  linkRow: {
+    alignItems: 'center',
+    backgroundColor: palette.surfaceMuted,
+    borderRadius: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  linkLabel: {
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  linkArrow: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 18,
+    fontWeight: '700',
   },
   optionCard: {
     backgroundColor: palette.surfaceMuted,

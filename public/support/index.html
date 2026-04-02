@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Time Tutor Support</title>
+    <style>
+      :root {
+        --bg: #f7f1e8;
+        --surface: #fffaf2;
+        --ink: #173f73;
+        --muted: #5f738e;
+        --border: #eadfce;
+        --accent: #ef7a5a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top, rgba(255, 255, 255, 0.9), transparent 45%),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          "Avenir Next", Avenir, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      .page {
+        margin: 0 auto;
+        max-width: 760px;
+        padding: 56px 20px 72px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 32px;
+        box-shadow: 0 18px 42px rgba(25, 52, 84, 0.08);
+        padding: 32px 24px;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        line-height: 1.05;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+        margin-top: 32px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 1rem;
+      }
+
+      .lede {
+        margin-top: 14px;
+        max-width: 52ch;
+      }
+
+      .contact {
+        margin-top: 14px;
+        font-size: 1.05rem;
+      }
+
+      a {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .faq {
+        display: grid;
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .faq-item {
+        border-top: 1px solid var(--border);
+        padding-top: 18px;
+      }
+
+      .faq-item:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .question {
+        color: var(--ink);
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+      }
+
+      .answer {
+        margin: 0;
+      }
+
+      @media (max-width: 520px) {
+        .page {
+          padding: 28px 14px 48px;
+        }
+
+        .card {
+          border-radius: 24px;
+          padding: 24px 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <h1>Time Tutor Support</h1>
+
+        <h2>About Time Tutor</h2>
+        <p class="lede">
+          Time Tutor helps children practice reading analog and digital time with simple, hands-on activities.
+        </p>
+
+        <h2>Need help?</h2>
+        <p class="contact">
+          For support, bug reports, or feature requests, email:
+          <a href="mailto:support@timetutor.app">support@timetutor.app</a>
+        </p>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq">
+          <section class="faq-item">
+            <p class="question">Who is Time Tutor for?</p>
+            <p class="answer">
+              Time Tutor is designed for kids, parents, and teachers who want simple practice with analog and digital clocks.
+            </p>
+          </section>
+
+          <section class="faq-item">
+            <p class="question">Do I need an account?</p>
+            <p class="answer">No. Time Tutor does not require an account.</p>
+          </section>
+
+          <section class="faq-item">
+            <p class="question">Does Time Tutor collect personal information?</p>
+            <p class="answer">See our Privacy Policy for details.</p>
+          </section>
+
+          <section class="faq-item">
+            <p class="question">How do I report a bug or suggest a feature?</p>
+            <p class="answer">
+              Send us an email at
+              <a href="mailto:support@timetutor.app">support@timetutor.app</a>.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
