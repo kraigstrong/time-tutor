@@ -1,16 +1,19 @@
 import React from 'react';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SettingsScreen } from '../src/screens/SettingsScreen';
 
 describe('SettingsScreen', () => {
+  const originalPlatform = Platform.OS;
+
   beforeEach(() => {
     jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
+    (Platform as { OS: string }).OS = originalPlatform;
     jest.restoreAllMocks();
   });
 
@@ -77,7 +80,9 @@ describe('SettingsScreen', () => {
     expect(onSelectTimeFormat).toHaveBeenCalledWith('24-hour');
   });
 
-  it('opens support and privacy links', () => {
+  it('opens support and privacy links directly on web', () => {
+    (Platform as { OS: string }).OS = 'web';
+
     const screen = render(
       <SafeAreaProvider
         initialMetrics={{
@@ -107,5 +112,47 @@ describe('SettingsScreen', () => {
       2,
       'https://timetutor.app/privacy',
     );
+  });
+
+  it('requires a parental gate before opening external links on ios', () => {
+    (Platform as { OS: string }).OS = 'ios';
+    jest.clearAllMocks();
+
+    const screen = render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { height: 852, width: 393, x: 0, y: 0 },
+          insets: { bottom: 34, left: 0, right: 0, top: 59 },
+        }}
+      >
+        <SettingsScreen
+          interval="5-minute"
+          onBack={jest.fn()}
+          onSelectInterval={jest.fn()}
+          onSelectTimeFormat={jest.fn()}
+          timeFormat="12-hour"
+          timeFormat24Availability={{ enabled: true, label: '24-hour' }}
+        />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('settings-support-link'));
+
+    expect(screen.getByText('Parent Check')).toBeTruthy();
+    expect(Linking.openURL).not.toHaveBeenCalled();
+
+    fireEvent.changeText(screen.getByTestId('parental-gate-input'), '0');
+    fireEvent.press(screen.getByTestId('parental-gate-continue'));
+
+    expect(screen.getByTestId('parental-gate-error')).toBeTruthy();
+    expect(Linking.openURL).not.toHaveBeenCalled();
+
+    const question = screen.getByTestId('parental-gate-question').props.children;
+    const left = Number(question[1]);
+    const right = Number(question[3]);
+    fireEvent.changeText(screen.getByTestId('parental-gate-input'), String(left + right));
+    fireEvent.press(screen.getByTestId('parental-gate-continue'));
+
+    expect(Linking.openURL).toHaveBeenCalledWith('https://timetutor.app/support');
   });
 });

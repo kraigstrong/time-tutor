@@ -1,10 +1,13 @@
 import React from 'react';
 import {
   Linking,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -78,197 +81,294 @@ export function SettingsScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const [gateAnswer, setGateAnswer] = React.useState('');
+  const [gateError, setGateError] = React.useState('');
+  const [pendingExternalUrl, setPendingExternalUrl] = React.useState<string | null>(null);
+  const [gatePrompt, setGatePrompt] = React.useState(() => createParentalGatePrompt());
   const isTablet = width >= 768;
   const headerMaxWidth = Math.min(width - 24, 860);
   const contentWidth = Math.min(width - 24, isTablet ? 760 : 560);
+  const isNativeIos = Platform.OS === 'ios';
   const openExternalLink = (url: string) => {
     Linking.openURL(url).catch(() => {});
   };
+  const closeGate = React.useCallback(() => {
+    setPendingExternalUrl(null);
+    setGateAnswer('');
+    setGateError('');
+  }, []);
+  const handleHelpLinkPress = React.useCallback(
+    (url: string) => {
+      if (!isNativeIos) {
+        openExternalLink(url);
+        return;
+      }
+
+      setGatePrompt(createParentalGatePrompt());
+      setGateAnswer('');
+      setGateError('');
+      setPendingExternalUrl(url);
+    },
+    [isNativeIos],
+  );
+  const submitGate = React.useCallback(() => {
+    if (gateAnswer.trim() === String(gatePrompt.answer) && pendingExternalUrl) {
+      closeGate();
+      openExternalLink(pendingExternalUrl);
+      return;
+    }
+
+    setGateAnswer('');
+    setGateError('Please ask a parent to try again.');
+    setGatePrompt(createParentalGatePrompt());
+  }, [closeGate, gateAnswer, gatePrompt.answer, pendingExternalUrl]);
 
   return (
-    <ScrollView
-      bounces={false}
-      contentContainerStyle={[
-        styles.scrollContent,
-        {
-          paddingBottom: Math.max(insets.bottom + 24, 28),
-          paddingTop: Math.max(insets.top + 12, 28),
-        },
-      ]}
-      style={styles.scrollView}
-    >
-      <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerSideSlot}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={styles.backButton}
-              testID="settings-back-button"
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </Pressable>
+    <>
+      <ScrollView
+        bounces={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: Math.max(insets.bottom + 24, 28),
+            paddingTop: Math.max(insets.top + 12, 28),
+          },
+        ]}
+        style={styles.scrollView}
+      >
+        <View style={[styles.headerShell, { maxWidth: headerMaxWidth }]}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerSideSlot}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={styles.backButton}
+                testID="settings-back-button"
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
+            <View style={styles.headerCopy}>
+              <Text style={styles.title}>Settings</Text>
+            </View>
+            <View style={styles.headerSideSlot} />
           </View>
-          <View style={styles.headerCopy}>
-            <Text style={styles.title}>Settings</Text>
-          </View>
-          <View style={styles.headerSideSlot} />
         </View>
-      </View>
 
-      <View style={[styles.content, { maxWidth: contentWidth }]}>
-        <Text style={styles.subtitle}>
-          Choose which time intervals to practice.
-        </Text>
+        <View style={[styles.content, { maxWidth: contentWidth }]}>
+          <Text style={styles.subtitle}>
+            Choose which time intervals to practice.
+          </Text>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionEyebrow}>Practice interval</Text>
-          <View style={styles.optionsColumn}>
-            {intervalOptions.map(option => {
-              const isSelected = option.value === interval;
+          <View style={styles.card}>
+            <Text style={styles.sectionEyebrow}>Practice interval</Text>
+            <View style={styles.optionsColumn}>
+              {intervalOptions.map(option => {
+                const isSelected = option.value === interval;
 
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  key={option.value}
-                  onPress={() => onSelectInterval(option.value)}
-                  style={[
-                    styles.optionCard,
-                    isSelected && styles.optionCardSelected,
-                  ]}
-                  testID={`interval-${option.value}`}
-                >
-                  <View style={styles.optionRow}>
-                    <View
-                      style={[
-                        styles.optionIndicator,
-                        isSelected && styles.optionIndicatorSelected,
-                      ]}
-                    >
-                      {isSelected ? <View style={styles.optionIndicatorDot} /> : null}
-                    </View>
-                    <View style={styles.optionCopy}>
-                      <Text
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    key={option.value}
+                    onPress={() => onSelectInterval(option.value)}
+                    style={[
+                      styles.optionCard,
+                      isSelected && styles.optionCardSelected,
+                    ]}
+                    testID={`interval-${option.value}`}
+                  >
+                    <View style={styles.optionRow}>
+                      <View
                         style={[
-                          styles.optionLabel,
-                          isSelected && styles.optionLabelSelected,
+                          styles.optionIndicator,
+                          isSelected && styles.optionIndicatorSelected,
                         ]}
                       >
-                        {option.label}
-                      </Text>
-                      <Text style={styles.optionDescription}>
-                        {option.description}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              );
-            })}
-            </View>
-        </View>
-      </View>
-
-      <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
-        <View style={styles.card}>
-          <Text style={styles.sectionEyebrow}>Time format</Text>
-          <Text style={styles.sectionDescription}>
-            Choose how digital times are shown and entered.
-          </Text>
-          <View style={styles.optionsColumn}>
-            {timeFormatOptions.map(option => {
-              const isSelected = option.value === timeFormat;
-              const isLocked =
-                option.value === '24-hour' && !timeFormat24Availability.enabled;
-
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: isLocked }}
-                  disabled={isLocked}
-                  key={option.value}
-                  onPress={() => onSelectTimeFormat(option.value)}
-                  style={[
-                    styles.optionCard,
-                    isSelected && styles.optionCardSelected,
-                    isLocked && styles.optionCardDisabled,
-                  ]}
-                  testID={`time-format-${option.value}`}
-                >
-                  <View style={styles.optionRow}>
-                    <View
-                      style={[
-                        styles.optionIndicator,
-                        isSelected && styles.optionIndicatorSelected,
-                      ]}
-                    >
-                      {isSelected ? <View style={styles.optionIndicatorDot} /> : null}
-                    </View>
-                    <View style={styles.optionCopy}>
-                      <View style={styles.optionTitleRow}>
+                        {isSelected ? <View style={styles.optionIndicatorDot} /> : null}
+                      </View>
+                      <View style={styles.optionCopy}>
                         <Text
                           style={[
                             styles.optionLabel,
                             isSelected && styles.optionLabelSelected,
-                            isLocked && styles.optionLabelDisabled,
                           ]}
                         >
                           {option.label}
                         </Text>
-                        {isLocked ? (
-                          <View style={styles.lockedBadge}>
-                            <Text style={styles.lockedBadgeText}>Locked</Text>
-                          </View>
-                        ) : null}
+                        <Text style={styles.optionDescription}>
+                          {option.description}
+                        </Text>
                       </View>
-                      <Text
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
+          <View style={styles.card}>
+            <Text style={styles.sectionEyebrow}>Time format</Text>
+            <Text style={styles.sectionDescription}>
+              Choose how digital times are shown and entered.
+            </Text>
+            <View style={styles.optionsColumn}>
+              {timeFormatOptions.map(option => {
+                const isSelected = option.value === timeFormat;
+                const isLocked =
+                  option.value === '24-hour' && !timeFormat24Availability.enabled;
+
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: isLocked }}
+                    disabled={isLocked}
+                    key={option.value}
+                    onPress={() => onSelectTimeFormat(option.value)}
+                    style={[
+                      styles.optionCard,
+                      isSelected && styles.optionCardSelected,
+                      isLocked && styles.optionCardDisabled,
+                    ]}
+                    testID={`time-format-${option.value}`}
+                  >
+                    <View style={styles.optionRow}>
+                      <View
                         style={[
-                          styles.optionDescription,
-                          isLocked && styles.optionDescriptionDisabled,
+                          styles.optionIndicator,
+                          isSelected && styles.optionIndicatorSelected,
                         ]}
                       >
-                        {option.description}
-                      </Text>
-                      {isLocked && timeFormat24Availability.reason ? (
-                        <Text style={styles.lockedReason}>
-                          {timeFormat24Availability.reason}
+                        {isSelected ? <View style={styles.optionIndicatorDot} /> : null}
+                      </View>
+                      <View style={styles.optionCopy}>
+                        <View style={styles.optionTitleRow}>
+                          <Text
+                            style={[
+                              styles.optionLabel,
+                              isSelected && styles.optionLabelSelected,
+                              isLocked && styles.optionLabelDisabled,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                          {isLocked ? (
+                            <View style={styles.lockedBadge}>
+                              <Text style={styles.lockedBadgeText}>Locked</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text
+                          style={[
+                            styles.optionDescription,
+                            isLocked && styles.optionDescriptionDisabled,
+                          ]}
+                        >
+                          {option.description}
                         </Text>
-                      ) : null}
+                        {isLocked && timeFormat24Availability.reason ? (
+                          <Text style={styles.lockedReason}>
+                            {timeFormat24Availability.reason}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
-                  </View>
-                </Pressable>
-              );
-            })}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
-        <View style={styles.card}>
-          <Text style={styles.sectionEyebrow}>Help</Text>
-          <View style={styles.linksColumn}>
-            <Pressable
-              accessibilityRole="link"
-              onPress={() => openExternalLink(getSiteUrl('/support'))}
-              style={styles.linkRow}
-              testID="settings-support-link"
-            >
-              <Text style={styles.linkLabel}>Support</Text>
-              <Text style={styles.linkArrow}>↗</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="link"
-              onPress={() => openExternalLink(getSiteUrl('/privacy'))}
-              style={styles.linkRow}
-              testID="settings-privacy-link"
-            >
-              <Text style={styles.linkLabel}>Privacy Policy</Text>
-              <Text style={styles.linkArrow}>↗</Text>
-            </Pressable>
+        <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
+          <View style={styles.card}>
+            <Text style={styles.sectionEyebrow}>Help</Text>
+            <View style={styles.linksColumn}>
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => handleHelpLinkPress(getSiteUrl('/support'))}
+                style={styles.linkRow}
+                testID="settings-support-link"
+              >
+                <Text style={styles.linkLabel}>Support</Text>
+                <Text style={styles.linkArrow}>↗</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => handleHelpLinkPress(getSiteUrl('/privacy'))}
+                style={styles.linkRow}
+                testID="settings-privacy-link"
+              >
+                <Text style={styles.linkLabel}>Privacy Policy</Text>
+                <Text style={styles.linkArrow}>↗</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={closeGate}
+        transparent
+        visible={pendingExternalUrl !== null}
+      >
+        <View style={styles.gateBackdrop}>
+          <View style={styles.gateCard}>
+            <Text style={styles.gateTitle}>Parent Check</Text>
+            <Text style={styles.gateDescription}>
+              Ask a parent to answer this before opening a website.
+            </Text>
+            <Text style={styles.gateQuestion} testID="parental-gate-question">
+              What is {gatePrompt.left} + {gatePrompt.right}?
+            </Text>
+            <TextInput
+              accessibilityLabel="Parental gate answer"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="number-pad"
+              onChangeText={text => {
+                setGateAnswer(text);
+                if (gateError) {
+                  setGateError('');
+                }
+              }}
+              placeholder="Enter answer"
+              placeholderTextColor={palette.inkMuted}
+              style={styles.gateInput}
+              testID="parental-gate-input"
+              value={gateAnswer}
+            />
+            {gateError ? (
+              <Text style={styles.gateError} testID="parental-gate-error">
+                {gateError}
+              </Text>
+            ) : null}
+            <View style={styles.gateActions}>
+              <Pressable onPress={closeGate} style={styles.gateSecondaryButton} testID="parental-gate-cancel">
+                <Text style={styles.gateSecondaryButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={submitGate} style={styles.gatePrimaryButton} testID="parental-gate-continue">
+                <Text style={styles.gatePrimaryButtonText}>Continue</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
+}
+
+function createParentalGatePrompt() {
+  const left = Math.floor(Math.random() * 8) + 2;
+  const right = Math.floor(Math.random() * 8) + 2;
+
+  return {
+    answer: left + right,
+    left,
+    right,
+  };
 }
 
 const styles = StyleSheet.create({
@@ -382,6 +482,98 @@ const styles = StyleSheet.create({
     color: palette.inkMuted,
     fontFamily: fontFamily.body,
     fontSize: 18,
+    fontWeight: '700',
+  },
+  gateBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(18, 53, 91, 0.34)',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  gateCard: {
+    backgroundColor: palette.surface,
+    borderRadius: 28,
+    maxWidth: 420,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+    width: '100%',
+    ...shadows.card,
+  },
+  gateTitle: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  gateDescription: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 17,
+    lineHeight: 24,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  gateQuestion: {
+    color: palette.ink,
+    fontFamily: fontFamily.display,
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  gateInput: {
+    backgroundColor: palette.surfaceMuted,
+    borderColor: palette.ring,
+    borderRadius: 18,
+    borderWidth: 1,
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    textAlign: 'center',
+  },
+  gateError: {
+    color: palette.danger,
+    fontFamily: fontFamily.body,
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  gateActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 18,
+  },
+  gateSecondaryButton: {
+    alignItems: 'center',
+    backgroundColor: palette.surfaceMuted,
+    borderRadius: 18,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  gateSecondaryButtonText: {
+    color: palette.ink,
+    fontFamily: fontFamily.body,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  gatePrimaryButton: {
+    alignItems: 'center',
+    backgroundColor: palette.ink,
+    borderRadius: 18,
+    flex: 1,
+    paddingVertical: 14,
+  },
+  gatePrimaryButtonText: {
+    color: palette.white,
+    fontFamily: fontFamily.body,
+    fontSize: 17,
     fontWeight: '700',
   },
   optionCard: {
