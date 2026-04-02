@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette } from '../styles/theme';
@@ -43,6 +43,49 @@ export function DigitalTimeInput({
   timeFormat = '12-hour',
 }: DigitalTimeInputProps) {
   const showMinuteControls = practiceInterval !== 'hours-only';
+  const latestValueRef = useRef(value);
+
+  useEffect(() => {
+    latestValueRef.current = value;
+  }, [value]);
+
+  const commitNextValue = useCallback(
+    (nextValue: DigitalTimeValue) => {
+      latestValueRef.current = nextValue;
+      onChange(nextValue);
+    },
+    [onChange],
+  );
+
+  const stepHour = useCallback(
+    (direction: 1 | -1) => {
+      const currentValue = latestValueRef.current;
+      const nextValue = {
+        ...currentValue,
+        hour: cycleDigitalHour(currentValue.hour, direction, timeFormat),
+      };
+
+      commitNextValue(nextValue);
+    },
+    [commitNextValue, timeFormat],
+  );
+
+  const stepMinute = useCallback(
+    (direction: 1 | -1) => {
+      const currentValue = latestValueRef.current;
+      const nextValue = {
+        ...currentValue,
+        minute: cycleMinuteForInterval(
+          currentValue.minute,
+          direction,
+          practiceInterval,
+        ),
+      };
+
+      commitNextValue(nextValue);
+    },
+    [commitNextValue, practiceInterval],
+  );
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -56,18 +99,8 @@ export function DigitalTimeInput({
           }
           compact={compact}
           disabled={disabled}
-          onIncrement={() =>
-            onChange({
-              ...value,
-              hour: cycleDigitalHour(value.hour, 1, timeFormat),
-            })
-          }
-          onDecrement={() =>
-            onChange({
-              ...value,
-              hour: cycleDigitalHour(value.hour, -1, timeFormat),
-            })
-          }
+          onIncrement={() => stepHour(1)}
+          onDecrement={() => stepHour(-1)}
           decrementTestID="hour-decrement-button"
           incrementTestID="hour-increment-button"
           valueTestID="hour-value"
@@ -78,23 +111,16 @@ export function DigitalTimeInput({
           value={String(value.minute).padStart(2, '0')}
           compact={compact}
           disabled={disabled || !showMinuteControls}
-          onIncrement={() =>
-            onChange({
-              ...value,
-              minute: cycleMinuteForInterval(value.minute, 1, practiceInterval),
-            })
-          }
-          onDecrement={() =>
-            onChange({
-              ...value,
-              minute: cycleMinuteForInterval(value.minute, -1, practiceInterval),
-            })
-          }
+          onIncrement={() => stepMinute(1)}
+          onDecrement={() => stepMinute(-1)}
           decrementTestID="minute-decrement-button"
           incrementTestID="minute-increment-button"
           valueTestID="minute-value"
         />
       </View>
+      <Text style={[styles.tipText, compact && styles.tipTextCompact]}>
+        Tip: press and hold + or - to adjust faster.
+      </Text>
     </View>
   );
 }
@@ -110,6 +136,67 @@ function ControlCard({
   disabled = false,
   compact = false,
 }: ControlCardProps) {
+  const holdDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const repeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const stopRepeating = useCallback(() => {
+    if (holdDelayTimeoutRef.current) {
+      clearTimeout(holdDelayTimeoutRef.current);
+      holdDelayTimeoutRef.current = null;
+    }
+    if (repeatTimeoutRef.current) {
+      clearTimeout(repeatTimeoutRef.current);
+      repeatTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => stopRepeating, [stopRepeating]);
+
+  const startRepeating = useCallback(
+    (action: () => void) => {
+      stopRepeating();
+      longPressTriggeredRef.current = true;
+
+      const startedAt = Date.now();
+
+      const tick = () => {
+        action();
+
+        const elapsed = Date.now() - startedAt;
+        const nextDelay =
+          elapsed >= 1200 ? 42 : elapsed >= 550 ? 90 : 140;
+
+        repeatTimeoutRef.current = setTimeout(tick, nextDelay);
+      };
+
+      tick();
+    },
+    [stopRepeating],
+  );
+
+  const scheduleRepeating = useCallback(
+    (action: () => void) => {
+      stopRepeating();
+      longPressTriggeredRef.current = false;
+
+      holdDelayTimeoutRef.current = setTimeout(() => {
+        holdDelayTimeoutRef.current = null;
+        startRepeating(action);
+      }, 220);
+    },
+    [startRepeating, stopRepeating],
+  );
+
+  const handlePress = useCallback((action: () => void) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    action();
+  }, []);
+
   return (
     <View
       style={[
@@ -130,7 +217,9 @@ function ControlCard({
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
-          onPress={onDecrement}
+          onPressIn={() => scheduleRepeating(onDecrement)}
+          onPress={() => handlePress(onDecrement)}
+          onPressOut={stopRepeating}
           style={[
             styles.controlStepper,
             compact && styles.controlButtonCompact,
@@ -157,7 +246,9 @@ function ControlCard({
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
-          onPress={onIncrement}
+          onPressIn={() => scheduleRepeating(onIncrement)}
+          onPress={() => handlePress(onIncrement)}
+          onPressOut={stopRepeating}
           style={[
             styles.controlStepper,
             compact && styles.controlButtonCompact,
@@ -277,6 +368,18 @@ const styles = StyleSheet.create({
   },
   controlButtonDisabled: {
     opacity: 0.35,
+  },
+  tipText: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  tipTextCompact: {
+    fontSize: 12,
+    lineHeight: 17,
+    maxWidth: 240,
   },
   controlButtonText: {
     color: palette.white,

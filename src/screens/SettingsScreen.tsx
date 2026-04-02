@@ -163,7 +163,7 @@ export function SettingsScreen({
         </View>
       </View>
 
-      <View style={[styles.content, { maxWidth: contentWidth }]}>
+      <View style={[styles.content, styles.contentSectionSpacing, { maxWidth: contentWidth }]}>
         <View style={styles.card}>
           <Text style={styles.sectionEyebrow}>Time format</Text>
           <Text style={styles.sectionDescription}>
@@ -253,6 +253,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: 18,
     width: '100%',
+  },
+  contentSectionSpacing: {
+    marginTop: 12,
   },
   headerShell: {
     alignSelf: 'center',

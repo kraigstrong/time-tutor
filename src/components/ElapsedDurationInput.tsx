@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fontFamily, palette } from '../styles/theme';
@@ -36,6 +36,49 @@ export function ElapsedDurationInput({
   compact = false,
 }: Props) {
   const showMinuteControls = practiceInterval !== 'hours-only';
+  const latestValueRef = useRef(value);
+
+  useEffect(() => {
+    latestValueRef.current = value;
+  }, [value]);
+
+  const commitNextValue = useCallback(
+    (nextValue: ElapsedDurationValue) => {
+      latestValueRef.current = nextValue;
+      onChange(nextValue);
+    },
+    [onChange],
+  );
+
+  const stepHours = useCallback(
+    (direction: 1 | -1) => {
+      const currentValue = latestValueRef.current;
+      const nextValue = {
+        ...currentValue,
+        hours: cycleElapsedHours(currentValue.hours, direction),
+      };
+
+      commitNextValue(nextValue);
+    },
+    [commitNextValue],
+  );
+
+  const stepMinutes = useCallback(
+    (direction: 1 | -1) => {
+      const currentValue = latestValueRef.current;
+      const nextValue = {
+        ...currentValue,
+        minutes: cycleMinuteForInterval(
+          currentValue.minutes,
+          direction,
+          practiceInterval,
+        ),
+      };
+
+      commitNextValue(nextValue);
+    },
+    [commitNextValue, practiceInterval],
+  );
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -46,18 +89,8 @@ export function ElapsedDurationInput({
           disabled={disabled}
           incrementTestID="elapsed-hours-increment-button"
           label="Hours"
-          onDecrement={() =>
-            onChange({
-              ...value,
-              hours: cycleElapsedHours(value.hours, -1),
-            })
-          }
-          onIncrement={() =>
-            onChange({
-              ...value,
-              hours: cycleElapsedHours(value.hours, 1),
-            })
-          }
+          onDecrement={() => stepHours(-1)}
+          onIncrement={() => stepHours(1)}
           value={String(value.hours)}
           valueTestID="elapsed-hours-value"
         />
@@ -68,30 +101,15 @@ export function ElapsedDurationInput({
           disabled={disabled || !showMinuteControls}
           incrementTestID="elapsed-minutes-increment-button"
           label="Minutes"
-          onDecrement={() =>
-            onChange({
-              ...value,
-              minutes: cycleMinuteForInterval(
-                value.minutes,
-                -1,
-                practiceInterval,
-              ),
-            })
-          }
-          onIncrement={() =>
-            onChange({
-              ...value,
-              minutes: cycleMinuteForInterval(
-                value.minutes,
-                1,
-                practiceInterval,
-              ),
-            })
-          }
+          onDecrement={() => stepMinutes(-1)}
+          onIncrement={() => stepMinutes(1)}
           value={String(value.minutes).padStart(2, '0')}
           valueTestID="elapsed-minutes-value"
         />
       </View>
+      <Text style={[styles.tipText, compact && styles.tipTextCompact]}>
+        Tip: press and hold + or - to adjust faster.
+      </Text>
     </View>
   );
 }
@@ -107,6 +125,67 @@ function Control({
   value,
   valueTestID,
 }: ControlProps) {
+  const holdDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const repeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const stopRepeating = useCallback(() => {
+    if (holdDelayTimeoutRef.current) {
+      clearTimeout(holdDelayTimeoutRef.current);
+      holdDelayTimeoutRef.current = null;
+    }
+    if (repeatTimeoutRef.current) {
+      clearTimeout(repeatTimeoutRef.current);
+      repeatTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => stopRepeating, [stopRepeating]);
+
+  const startRepeating = useCallback(
+    (action: () => void) => {
+      stopRepeating();
+      longPressTriggeredRef.current = true;
+
+      const startedAt = Date.now();
+
+      const tick = () => {
+        action();
+
+        const elapsed = Date.now() - startedAt;
+        const nextDelay =
+          elapsed >= 1200 ? 42 : elapsed >= 550 ? 90 : 140;
+
+        repeatTimeoutRef.current = setTimeout(tick, nextDelay);
+      };
+
+      tick();
+    },
+    [stopRepeating],
+  );
+
+  const scheduleRepeating = useCallback(
+    (action: () => void) => {
+      stopRepeating();
+      longPressTriggeredRef.current = false;
+
+      holdDelayTimeoutRef.current = setTimeout(() => {
+        holdDelayTimeoutRef.current = null;
+        startRepeating(action);
+      }, 220);
+    },
+    [startRepeating, stopRepeating],
+  );
+
+  const handlePress = useCallback((action: () => void) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    action();
+  }, []);
+
   return (
     <View style={[styles.controlGroup, compact && styles.controlGroupCompact]}>
       <Text style={[styles.controlLabel, compact && styles.controlLabelCompact]}>
@@ -122,7 +201,9 @@ function Control({
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
-          onPress={onDecrement}
+          onPress={() => handlePress(onDecrement)}
+          onPressIn={() => scheduleRepeating(onDecrement)}
+          onPressOut={stopRepeating}
           style={[
             styles.controlStepper,
             compact && styles.controlStepperCompact,
@@ -149,7 +230,9 @@ function Control({
         <Pressable
           accessibilityRole="button"
           disabled={disabled}
-          onPress={onIncrement}
+          onPress={() => handlePress(onIncrement)}
+          onPressIn={() => scheduleRepeating(onIncrement)}
+          onPressOut={stopRepeating}
           style={[
             styles.controlStepper,
             compact && styles.controlStepperCompact,
@@ -280,5 +363,17 @@ const styles = StyleSheet.create({
   controlValueCompact: {
     fontSize: 30,
     minWidth: 44,
+  },
+  tipText: {
+    color: palette.inkMuted,
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  tipTextCompact: {
+    fontSize: 12,
+    lineHeight: 17,
+    maxWidth: 240,
   },
 });
