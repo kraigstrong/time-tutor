@@ -24,6 +24,7 @@ import {
   digitalValueToTimeValue,
   normalizeAnalogTimeFor24Hour,
   randomTimeValueForInterval,
+  stepDigitalTimeValue,
   timeValueToDigitalValue,
 } from '../utils/time';
 
@@ -85,6 +86,26 @@ export function ExploreTimeScreen({
     setTime(currentTime =>
       digitalValueToTimeValue(value, timeFormat, currentTime.meridiem),
     );
+  };
+
+  const handleDigitalStep = (unit: 'hour' | 'minute', direction: 1 | -1) => {
+    setTime(currentTime => {
+      const nextDigitalValue = stepDigitalTimeValue(
+        timeValueToDigitalValue(currentTime, timeFormat),
+        unit,
+        direction,
+        {
+          practiceInterval,
+          timeFormat,
+        },
+      );
+
+      return digitalValueToTimeValue(
+        nextDigitalValue,
+        timeFormat,
+        currentTime.meridiem,
+      );
+    });
   };
 
   return (
@@ -150,6 +171,7 @@ export function ExploreTimeScreen({
               <DigitalTimeInput
                 compact={useCompactDigitalInput}
                 onChange={handleDigitalChange}
+                onStep={handleDigitalStep}
                 practiceInterval={practiceInterval}
                 timeFormat={timeFormat}
                 value={digitalValue}

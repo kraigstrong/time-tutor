@@ -15,6 +15,7 @@ import {
 type DigitalTimeInputProps = {
   value: DigitalTimeValue;
   onChange: (value: DigitalTimeValue) => void;
+  onStep?: (unit: 'hour' | 'minute', direction: 1 | -1) => void;
   showMeridiem?: boolean;
   practiceInterval?: PracticeInterval;
   disabled?: boolean;
@@ -37,6 +38,7 @@ type ControlCardProps = {
 export function DigitalTimeInput({
   value,
   onChange,
+  onStep,
   practiceInterval = '5-minute',
   disabled = false,
   compact = false,
@@ -63,6 +65,11 @@ export function DigitalTimeInput({
 
   const stepHour = useCallback(
     (direction: 1 | -1) => {
+      if (onStep) {
+        onStep('hour', direction);
+        return;
+      }
+
       const currentValue = latestValueRef.current;
       const nextValue = {
         ...currentValue,
@@ -71,11 +78,16 @@ export function DigitalTimeInput({
 
       commitNextValue(nextValue);
     },
-    [commitNextValue, timeFormat],
+    [commitNextValue, onStep, timeFormat],
   );
 
   const stepMinute = useCallback(
     (direction: 1 | -1) => {
+      if (onStep) {
+        onStep('minute', direction);
+        return;
+      }
+
       const currentValue = latestValueRef.current;
       const nextValue = {
         ...currentValue,
@@ -88,7 +100,7 @@ export function DigitalTimeInput({
 
       commitNextValue(nextValue);
     },
-    [commitNextValue, practiceInterval],
+    [commitNextValue, onStep, practiceInterval],
   );
 
   return (

@@ -64,6 +64,33 @@ describe('ExploreTimeScreen', () => {
     );
   });
 
+  it('keeps digital minute stepping continuous in 24-hour mode', () => {
+    mockRandomTimeValueForInterval.mockReturnValue({
+      hour12: 12,
+      meridiem: 'AM',
+      minute: 59,
+    });
+
+    const screen = render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <ExploreTimeScreen
+          onBack={jest.fn()}
+          onOpenSettings={jest.fn()}
+          practiceInterval="1-minute"
+          timeFormat="24-hour"
+        />
+      </SafeAreaProvider>,
+    );
+
+    fireEvent.press(screen.getByTestId('minute-increment-button'));
+
+    expect(screen.getByTestId('hour-value').props.children).toBe('01');
+    expect(screen.getByTestId('minute-value').props.children).toBe('00');
+    expect(screen.getByTestId('analog-clock-time-preview').props.children).toBe(
+      '01:00',
+    );
+  });
+
   it('updates the digital controls when the analog clock changes', () => {
     const screen = render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>

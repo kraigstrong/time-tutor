@@ -296,6 +296,37 @@ export function cycleMinuteForInterval(
   return minuteOptions[nextIndex] as MinuteValue;
 }
 
+export function stepDigitalTimeValue(
+  value: DigitalTimeValue,
+  unit: 'hour' | 'minute',
+  direction: 1 | -1,
+  options: {
+    practiceInterval: PracticeInterval;
+    timeFormat: TimeFormat;
+  },
+): DigitalTimeValue {
+  if (unit === 'hour') {
+    return {
+      ...value,
+      hour: cycleDigitalHour(value.hour, direction, options.timeFormat),
+    };
+  }
+
+  const minuteOptions = getMinuteOptions(options.practiceInterval);
+  const currentIndex = getClosestMinuteOptionIndex(value.minute, minuteOptions);
+  const nextIndex = modulo(currentIndex + direction, minuteOptions.length);
+  const wrappedForward = direction > 0 && nextIndex <= currentIndex;
+  const wrappedBackward = direction < 0 && nextIndex >= currentIndex;
+
+  return {
+    hour:
+      wrappedForward || wrappedBackward
+        ? cycleDigitalHour(value.hour, direction, options.timeFormat)
+        : value.hour,
+    minute: minuteOptions[nextIndex] as MinuteValue,
+  };
+}
+
 export function toggleMeridiem(current: Meridiem): Meridiem {
   return current === 'AM' ? 'PM' : 'AM';
 }

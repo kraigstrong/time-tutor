@@ -26,6 +26,7 @@ import {
   randomTimeValueForInterval,
   snapMinuteFromAngle,
   snapMinuteFromAngleForInterval,
+  stepDigitalTimeValue,
   timeValueToDigitalValue,
   to24HourVariants,
 } from '../src/utils/time';
@@ -129,6 +130,32 @@ describe('time utilities', () => {
     expect(cycleMinuteForInterval(14, 1, '1-minute')).toBe(15);
     expect(cycleMinuteForInterval(0, 1, '15-minute')).toBe(15);
     expect(cycleMinuteForInterval(0, 1, 'hours-only')).toBe(0);
+  });
+
+  it('keeps digital stepping continuous when minute wrapping crosses the hour', () => {
+    expect(
+      stepDigitalTimeValue(
+        { hour: 0, minute: 59 },
+        'minute',
+        1,
+        { practiceInterval: '1-minute', timeFormat: '24-hour' },
+      ),
+    ).toEqual({
+      hour: 1,
+      minute: 0,
+    });
+
+    expect(
+      stepDigitalTimeValue(
+        { hour: 0, minute: 0 },
+        'minute',
+        -1,
+        { practiceInterval: '1-minute', timeFormat: '24-hour' },
+      ),
+    ).toEqual({
+      hour: 23,
+      minute: 59,
+    });
   });
 
   it('creates valid initial digital answers for both display formats', () => {
