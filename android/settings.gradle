@@ -1,6 +1,19 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+def projectRoot = settings.layout.rootDirectory.dir("../").asFile
+def cliEntry = new File(projectRoot, "node_modules/@react-native-community/cli/build/bin.js")
+def configuredNodeBinary = System.getenv("NODE_BINARY")
+def fallbackNodeBinary = [
+  "/opt/homebrew/bin/node",
+  "/usr/local/bin/node",
+].find { candidate -> new File(candidate).exists() }
+def nodeBinary = (configuredNodeBinary && configuredNodeBinary.trim())
+  ? configuredNodeBinary
+  : (fallbackNodeBinary ?: "node")
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  ex.autolinkLibrariesFromCommand([nodeBinary, cliEntry.absolutePath, "config"])
+}
 rootProject.name = 'TimeTutor'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
